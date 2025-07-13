@@ -38,8 +38,12 @@ jobs:
     - name: Build TypeScript and Renderer
       run: npm run build
 
-    - name: List build output
-      run: ls -la build/ || echo "No build directory"
+    - name: Verify build files
+      run: |
+        echo "Checking for build files..."
+        ls -la build/ || echo "No build directory found"
+        ls -la build/main.js || echo "No main.js found"
+        ls -la build/preload/ || echo "No preload directory found"
 
     - name: Build Electron App
       run: |
