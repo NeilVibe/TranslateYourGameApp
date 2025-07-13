@@ -5,7 +5,7 @@
   "main": "build/main.js",
   "scripts": {
     "start": "npm run build:main && electron .",
-    "build": "npm run build:main && npm run build:renderer",
+    "build": "npm run build:main && npm run build:preload && npm run build:renderer",
     "build:main": "tsc src/main/main.ts --outDir build --target ES2020 --module commonjs --moduleResolution node --esModuleInterop",
     "build:preload": "tsc src/preload/preload.ts --outDir build/preload --target ES2020 --module commonjs --moduleResolution node --esModuleInterop",
     "build:renderer": "webpack --mode production",
