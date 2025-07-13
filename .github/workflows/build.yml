@@ -36,12 +36,15 @@ jobs:
 
     - name: Build app
       run: |
+        # First build the renderer and main process
+        npm run build
+        # Then build platform-specific packages
         if [ "${{ matrix.platform }}" = "win" ]; then
-          npm run build:win
+          npx electron-builder --win
         elif [ "${{ matrix.platform }}" = "mac" ]; then
-          npm run build:mac
+          npx electron-builder --mac
         else
-          npm run build:linux
+          npx electron-builder --linux
         fi
       shell: bash
 
