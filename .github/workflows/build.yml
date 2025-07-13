@@ -35,17 +35,18 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Build app
+    - name: Build TypeScript and Renderer
+      run: npm run build
+
+    - name: List build output
+      run: ls -la build/ || echo "No build directory"
+
+    - name: Build Electron App
       run: |
-        # First build the renderer and main process
-        npm run build
-        # Then build platform-specific packages
         if [ "${{ matrix.platform }}" = "win" ]; then
-          npx electron-builder --win
-        elif [ "${{ matrix.platform }}" = "mac" ]; then
-          npx electron-builder --mac
+          npx electron-builder --win --publish=never
         else
-          npx electron-builder --linux
+          npx electron-builder --linux --publish=never
         fi
       shell: bash
 
