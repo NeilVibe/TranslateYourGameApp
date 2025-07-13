@@ -16,11 +16,9 @@ jobs:
         include:
           - os: windows-latest
             platform: win
-          - os: ubuntu-latest
-            platform: linux
-          # Mac build disabled temporarily due to dmg-license dependency issue
-          # - os: macos-latest
-          #   platform: mac
+          - os: macos-latest
+            platform: mac
+          # Linux removed - business focus on Windows & Mac only
 
     steps:
     - name: Checkout code
