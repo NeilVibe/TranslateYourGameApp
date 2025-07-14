@@ -409,8 +409,14 @@ async function loadGlossaries() {
         
         if (!response.ok) throw new Error('Failed to load glossaries');
         
-        const data = await response.json();
-        availableGlossaries = data.glossaries || [];
+        const responseData = await response.json();
+        
+        // Handle API v1 response format
+        if (responseData.status === 'success' && responseData.data) {
+            availableGlossaries = responseData.data.glossaries || [];
+        } else {
+            throw new Error('Invalid response format');
+        }
         
         // Update UI
         updateGlossaryList();
@@ -459,13 +465,36 @@ function updateGlossarySelector() {
 // View glossary details
 window.viewGlossary = async function(glossaryId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/glossaries/${glossaryId}`, {
+        // Fetch glossary info
+        const glossaryResponse = await fetch(`${API_BASE_URL}/glossaries/${glossaryId}`, {
             headers: { 'X-API-Key': API_KEY }
         });
         
-        if (!response.ok) throw new Error('Failed to load glossary');
+        if (!glossaryResponse.ok) throw new Error('Failed to load glossary');
         
-        const glossary = await response.json();
+        const glossaryData = await glossaryResponse.json();
+        
+        // Handle API v1 response format
+        if (glossaryData.status !== 'success' || !glossaryData.data) {
+            throw new Error('Invalid glossary response format');
+        }
+        
+        const glossary = glossaryData.data;
+        
+        // Fetch entries
+        const entriesResponse = await fetch(`${API_BASE_URL}/glossaries/${glossaryId}/entries`, {
+            headers: { 'X-API-Key': API_KEY }
+        });
+        
+        if (!entriesResponse.ok) throw new Error('Failed to load glossary entries');
+        
+        const entriesData = await entriesResponse.json();
+        
+        // Handle API v1 response format for entries
+        let entries = [];
+        if (entriesData.status === 'success' && entriesData.data) {
+            entries = entriesData.data.entries || [];
+        }
         
         // Show detail view
         document.getElementById('glossary-list').style.display = 'none';
@@ -474,7 +503,7 @@ window.viewGlossary = async function(glossaryId) {
         
         // Display entries
         const entriesEl = document.getElementById('glossary-entries');
-        entriesEl.innerHTML = (glossary.entries || []).map(entry => `
+        entriesEl.innerHTML = entries.map(entry => `
             <div class="glossary-entry">
                 <span>${entry.source_text}</span>
                 <span>→</span>
