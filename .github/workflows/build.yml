@@ -12,13 +12,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
             platform: win
           - os: macos-latest
             platform: mac
-          # Linux removed - business focus on Windows & Mac only
 
     steps:
     - name: Checkout code
@@ -33,23 +33,66 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Build TypeScript and Renderer
-      run: npm run build
+    - name: Clean build directory
+      run: |
+        if [ -d "build" ]; then
+          rm -rf build
+        fi
+        if [ -d "dist" ]; then
+          rm -rf dist
+        fi
+      shell: bash
+
+    - name: Build TypeScript Main Process
+      run: npm run build:main
+
+    - name: Build TypeScript Preload Process
+      run: npm run build:preload
+
+    - name: Build Webpack Renderer
+      run: npm run build:renderer
 
     - name: Verify build files
       run: |
-        echo "Checking for build files..."
-        ls -la build/ || echo "No build directory found"
-        ls -la build/main.js || echo "No main.js found"
-        ls -la build/preload/ || echo "No preload directory found"
+        echo "=== Checking build output ==="
+        echo "Current directory: $(pwd)"
+        echo ""
+        echo "=== Build directory contents ==="
+        ls -la build/ || echo "ERROR: No build directory found"
+        echo ""
+        echo "=== Main entry point ==="
+        ls -la build/main.js || echo "ERROR: No main.js found"
+        echo ""
+        echo "=== Preload directory ==="
+        ls -la build/preload/ || echo "ERROR: No preload directory found"
+        echo ""
+        echo "=== Renderer files ==="
+        ls -la build/renderer.js || echo "ERROR: No renderer.js found"
+        ls -la build/index.html || echo "ERROR: No index.html found"
+        echo ""
+        echo "=== Package.json main field ==="
+        grep '"main"' package.json || echo "ERROR: No main field in package.json"
+        echo ""
+        echo "=== Assets directory ==="
+        ls -la assets/ || echo "ERROR: No assets directory found"
+      shell: bash
 
     - name: Build Electron App
       run: |
+        echo "=== Starting Electron Builder ==="
+        echo "Platform: ${{ matrix.platform }}"
+        echo "OS: ${{ matrix.os }}"
+        echo ""
         if [ "${{ matrix.platform }}" = "win" ]; then
-          npx electron-builder --win --publish=never
+          echo "Building for Windows..."
+          npm run build:win
         else
-          npx electron-builder --linux --publish=never
+          echo "Building for Mac..."
+          npm run build:mac
         fi
+        echo ""
+        echo "=== Build completed, checking dist directory ==="
+        ls -la dist/ || echo "ERROR: No dist directory created"
       shell: bash
 
     - name: Upload Windows artifact
@@ -67,8 +110,9 @@ jobs:
       with:
         name: mac-app
         path: |
-          dist/*.dmg
+          dist/*.zip
           dist/mac/
+          dist/mac-arm64/
 
     - name: Upload Linux artifact
       if: matrix.platform == 'linux'
@@ -96,7 +140,7 @@ jobs:
       with:
         files: |
           windows-app/dist/*.exe
-          mac-app/dist/*.dmg
+          mac-app/dist/*.zip
           linux-app/dist/*.AppImage
         draft: false
         prerelease: false

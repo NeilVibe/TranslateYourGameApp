@@ -11,12 +11,25 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
+    fallback: {
+      "buffer": require.resolve("buffer"),
+      "stream": require.resolve("stream-browserify"),
+      "timers": require.resolve("timers-browserify"),
+      "util": require.resolve("util"),
+      "process": require.resolve("process/browser"),
+    },
   },
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        use: {
+          loader: 'ts-loader',
+          options: {
+            configFile: 'tsconfig.json',
+            transpileOnly: true,
+          },
+        },
         exclude: /node_modules/,
       },
       {
@@ -39,4 +52,7 @@ module.exports = {
       filename: 'index.html',
     }),
   ],
+  externals: {
+    electron: 'commonjs electron',
+  },
 };
