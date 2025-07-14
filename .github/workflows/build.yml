@@ -32,28 +32,15 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
-      
-    - name: Install TypeScript globally
-      run: npm install -g typescript
 
-    - name: Clean build directory
+    - name: Build application
       run: |
-        if [ -d "build" ]; then
-          rm -rf build
-        fi
-        if [ -d "dist" ]; then
-          rm -rf dist
-        fi
-      shell: bash
-
-    - name: Build All Components
-      run: |
-        echo "=== Starting build process ==="
-        echo "Node version: $(node --version)"
-        echo "NPM version: $(npm --version)"
-        echo "TypeScript version: $(tsc --version)"
+        echo "=== Environment Check ==="
+        node --version
+        npm --version
+        npx tsc --version
         echo ""
-        echo "=== Running npm run build ==="
+        echo "=== Building ==="
         npm run build
 
     - name: Verify build files
