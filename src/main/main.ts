@@ -58,12 +58,10 @@ function setupAutoUpdater() {
   
   autoUpdater.on('update-available', (info) => {
     console.log('Update available:', info.version);
-    dialog.showMessageBox(mainWindow!, {
-      type: 'info',
-      title: 'Update Available',
-      message: `A new version ${info.version} is available. It will be downloaded in the background.`,
-      buttons: ['OK']
-    });
+    // Send to renderer process
+    if (mainWindow) {
+      mainWindow.webContents.send('update-available', info);
+    }
   });
   
   autoUpdater.on('update-not-available', () => {
@@ -72,6 +70,10 @@ function setupAutoUpdater() {
   
   autoUpdater.on('error', (err) => {
     console.error('Auto-updater error:', err);
+    // Send to renderer process
+    if (mainWindow) {
+      mainWindow.webContents.send('update-error', err);
+    }
   });
   
   autoUpdater.on('download-progress', (progressObj) => {
@@ -79,20 +81,19 @@ function setupAutoUpdater() {
     log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
     log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
     console.log(log_message);
+    
+    // Send to renderer process
+    if (mainWindow) {
+      mainWindow.webContents.send('download-progress', progressObj);
+    }
   });
   
   autoUpdater.on('update-downloaded', (info) => {
     console.log('Update downloaded:', info.version);
-    dialog.showMessageBox(mainWindow!, {
-      type: 'info',
-      title: 'Update Ready',
-      message: `Version ${info.version} has been downloaded. Restart the app to apply the update.`,
-      buttons: ['Restart Now', 'Later']
-    }).then((result) => {
-      if (result.response === 0) {
-        autoUpdater.quitAndInstall();
-      }
-    });
+    // Send to renderer process
+    if (mainWindow) {
+      mainWindow.webContents.send('update-downloaded', info);
+    }
   });
   
   // Check for updates
@@ -214,4 +215,9 @@ ipcMain.handle('storage:setApiKey', async (event, apiKey) => {
 // Open external links
 ipcMain.handle('shell:openExternal', async (event, url) => {
   shell.openExternal(url);
+});
+
+// Auto-updater restart
+ipcMain.handle('app:restart', async () => {
+  autoUpdater.quitAndInstall();
 });

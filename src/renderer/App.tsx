@@ -10,6 +10,7 @@ import GlossarySelector from './components/GlossarySelector';
 import ChatbotTranslation from './components/ChatbotTranslation';
 import GlossaryManagement from './components/GlossaryManagement';
 import ProfessionalFileTranslation from './components/ProfessionalFileTranslation';
+import UpdateNotification from './components/UpdateNotification';
 import './App.css';
 
 const { Content } = Layout;
@@ -362,6 +363,8 @@ function App() {
             onClose={() => setSettingsVisible(false)}
             onSave={handleApiKeyUpdate}
           />
+          
+          <UpdateNotification />
         </Layout>
       </AntdApp>
     </ConfigProvider>
