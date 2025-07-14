@@ -599,8 +599,14 @@ async function translateChatbotText() {
         
         if (!response.ok) throw new Error('Translation failed');
         
-        const data = await response.json();
-        addChatMessage('assistant', data.translation);
+        const responseData = await response.json();
+        
+        // Handle API v1 response format
+        if (responseData.status === 'success' && responseData.data) {
+            addChatMessage('assistant', responseData.data.translation);
+        } else {
+            throw new Error('Invalid response format');
+        }
         
     } catch (error) {
         console.error('Translation error:', error);
