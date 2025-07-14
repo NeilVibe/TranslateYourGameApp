@@ -1,6 +1,6 @@
 {
   "name": "translate-your-game-desktop",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Professional game localization desktop app",
   "main": "build/main.js",
   "scripts": {
@@ -40,6 +40,12 @@
       "!web-dev.log",
       "!webpack.log"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "NeilVibe",
+      "repo": "TranslateYourGameApp",
+      "releaseType": "release"
+    },
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
@@ -48,7 +54,10 @@
       "target": [
         {
           "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "icon": "assets/icon-512.png",
@@ -89,6 +98,7 @@
     "@heroicons/react": "^2.2.0",
     "antd": "^5.26.0",
     "axios": "^1.10.0",
+    "electron-updater": "^6.6.2",
     "gettext-parser": "^8.0.0",
     "socket.io-client": "^4.8.1",
     "xlsx": "^0.18.5",

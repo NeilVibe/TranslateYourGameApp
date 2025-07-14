@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -44,10 +45,69 @@ function createWindow() {
   });
 }
 
+// Auto-updater configuration
+function setupAutoUpdater() {
+  // Configure auto-updater
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  
+  // Auto-updater event handlers
+  autoUpdater.on('checking-for-update', () => {
+    console.log('Checking for updates...');
+  });
+  
+  autoUpdater.on('update-available', (info) => {
+    console.log('Update available:', info.version);
+    dialog.showMessageBox(mainWindow!, {
+      type: 'info',
+      title: 'Update Available',
+      message: `A new version ${info.version} is available. It will be downloaded in the background.`,
+      buttons: ['OK']
+    });
+  });
+  
+  autoUpdater.on('update-not-available', () => {
+    console.log('No updates available');
+  });
+  
+  autoUpdater.on('error', (err) => {
+    console.error('Auto-updater error:', err);
+  });
+  
+  autoUpdater.on('download-progress', (progressObj) => {
+    let log_message = "Download speed: " + progressObj.bytesPerSecond;
+    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+    console.log(log_message);
+  });
+  
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('Update downloaded:', info.version);
+    dialog.showMessageBox(mainWindow!, {
+      type: 'info',
+      title: 'Update Ready',
+      message: `Version ${info.version} has been downloaded. Restart the app to apply the update.`,
+      buttons: ['Restart Now', 'Later']
+    }).then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+  
+  // Check for updates
+  autoUpdater.checkForUpdatesAndNotify();
+}
+
 // App event listeners
 app.whenReady().then(() => {
   try {
     createWindow();
+    
+    // Setup auto-updater after window is created
+    if (process.env.NODE_ENV !== 'development') {
+      setupAutoUpdater();
+    }
   } catch (error) {
     console.error('Failed to create window:', error);
     app.quit();
