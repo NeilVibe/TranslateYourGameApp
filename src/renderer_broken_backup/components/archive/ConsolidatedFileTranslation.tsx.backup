@@ -1,0 +1,711 @@
+import React, { useState } from 'react';
+import { Card, Button, Typography, Progress, Space, Alert, Steps, Row, Col, Statistic, Radio, Checkbox, Switch, Divider, Tooltip, Modal } from 'antd';
+import { FileTextOutlined, ThunderboltOutlined, RocketOutlined, CheckCircleOutlined, BookOutlined, SwapOutlined, UploadOutlined, SettingOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import apiClient, { TaskResponse } from '../services/apiClient';
+import FileUpload from './FileUpload';
+import LanguageSelector from './LanguageSelector';
+import GlossarySelector from './GlossarySelector';
+
+const { Title, Text, Paragraph } = Typography;
+const { Step } = Steps;
+
+interface ConsolidatedFileTranslationProps {
+  selectedGlossaries: number[];
+  onSelectedGlossariesChange: (ids: number[]) => void;
+  sourceLanguage: string;
+  targetLanguage: string;
+  onSourceLanguageChange: (lang: string) => void;
+  onTargetLanguageChange: (lang: string) => void;
+  apiKey: string | null;
+}
+
+type GlossaryMode = 'existing' | 'dynamic' | 'both' | 'none';
+
+const ConsolidatedFileTranslation: React.FC<ConsolidatedFileTranslationProps> = ({
+  selectedGlossaries,
+  onSelectedGlossariesChange,
+  sourceLanguage,
+  targetLanguage,
+  onSourceLanguageChange,
+  onTargetLanguageChange,
+  apiKey
+}) => {
+  const [fileInfo, setFileInfo] = useState<any>(null);
+  const [parseResult, setParseResult] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [currentTask, setCurrentTask] = useState<TaskResponse | null>(null);
+  const [glossaryMode, setGlossaryMode] = useState<GlossaryMode>('existing');
+  const [buildDynamicGlossary, setBuildDynamicGlossary] = useState(false);
+  const [dynamicGlossaryTask, setDynamicGlossaryTask] = useState<TaskResponse | null>(null);
+  const [isGeneratingGlossary, setIsGeneratingGlossary] = useState(false);
+  const [completedResults, setCompletedResults] = useState<any>(null);
+  const [helpModalVisible, setHelpModalVisible] = useState(false);
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'ko', name: '한국어 (Korean)' },
+    { code: 'ja', name: '日本語 (Japanese)' },
+    { code: 'fr', name: 'Français (French)' },
+    { code: 'es', name: 'Español (Spanish)' },
+    { code: 'de', name: 'Deutsch (German)' },
+    { code: 'it', name: 'Italiano (Italian)' },
+    { code: 'pt', name: 'Português (Portuguese)' },
+    { code: 'ru', name: 'Русский (Russian)' },
+    { code: 'zh', name: '中文 (Chinese)' }
+  ];
+
+  const handleFileSelect = async (file: File) => {
+    try {
+      // Check if running in Electron environment
+      if (typeof window !== 'undefined' && window.electronAPI) {
+        const fileObj = await window.electronAPI.openFile();
+        if (!fileObj) return;
+        setFileInfo(fileObj);
+      } else {
+        // Web environment - use the File object directly
+        if (file) {
+          setFileInfo({
+            name: file.name,
+            path: file.name,
+            size: file.size,
+            extension: file.name.substring(file.name.lastIndexOf('.'))
+          });
+        }
+      }
+      
+      // Mock parsing for now - replace with actual file parser
+      const mockParsed = {
+        entries: [
+          { source: 'Game Start', metadata: { row: 1 } },
+          { source: 'Health Potion', metadata: { row: 2 } },
+          { source: 'Magic Sword', metadata: { row: 3 } },
+          { source: 'Level Complete', metadata: { row: 4 } },
+          { source: 'Save Game', metadata: { row: 5 } }
+        ]
+      };
+      setParseResult(mockParsed);
+    } catch (error: any) {
+      console.error('File selection error:', error);
+    }
+  };
+
+  const handleStartProcess = async () => {
+    if (!parseResult || !apiKey) return;
+
+    setIsProcessing(true);
+    setCompletedResults(null);
+
+    try {
+      // Step 1: Generate dynamic glossary if needed
+      if (glossaryMode === 'dynamic' || glossaryMode === 'both') {
+        setIsGeneratingGlossary(true);
+        await generateDynamicGlossary();
+      }
+
+      // Step 2: Start file translation
+      await startFileTranslation();
+
+    } catch (error: any) {
+      console.error('Process failed:', error);
+      setIsProcessing(false);
+      setIsGeneratingGlossary(false);
+    }
+  };
+
+  const generateDynamicGlossary = async () => {
+    try {
+      const response = await apiClient.generateDynamicGlossary(
+        parseResult.entries.map((entry: any) => ({ source: entry.source })),
+        sourceLanguage,
+        targetLanguage,
+        glossaryMode === 'both' ? selectedGlossaries : [] as number[]
+      );
+
+      const taskId = response.data.task_id;
+      setDynamicGlossaryTask({
+        task_id: taskId,
+        status: 'processing',
+        progress: 0,
+        current_phase: 'Starting glossary generation...',
+        items_completed: 0,
+        total_items: parseResult.entries.length
+      });
+
+      // Poll for glossary generation status
+      const pollInterval = setInterval(async () => {
+        try {
+          const taskStatus = await apiClient.getTaskStatus(taskId);
+          setDynamicGlossaryTask(taskStatus);
+
+          if (taskStatus.status === 'completed') {
+            clearInterval(pollInterval);
+            setIsGeneratingGlossary(false);
+            // The generated glossary will be automatically used in translation
+          } else if (taskStatus.status === 'failed') {
+            clearInterval(pollInterval);
+            throw new Error(taskStatus.error_message || 'Glossary generation failed');
+          }
+        } catch (error) {
+          clearInterval(pollInterval);
+          throw error;
+        }
+      }, 2000);
+
+    } catch (error) {
+      setIsGeneratingGlossary(false);
+      throw error;
+    }
+  };
+
+  const startFileTranslation = async () => {
+    try {
+      // Use appropriate glossary IDs based on mode
+      let glossaryIds: number[] = [];
+      if (glossaryMode === 'existing' || glossaryMode === 'both') {
+        glossaryIds = selectedGlossaries;
+      }
+      // Dynamic glossary is automatically included if generated
+
+      const response = await apiClient.translateFile({
+        file_entries: parseResult.entries.map((entry: any) => ({
+          source: entry.source,
+          metadata: entry.metadata
+        })),
+        source_lang: sourceLanguage,
+        target_lang: targetLanguage,
+        glossary_ids: glossaryIds
+      });
+
+      const taskId = response.data.task_id;
+      setCurrentTask({
+        task_id: taskId,
+        status: 'processing',
+        progress: 0,
+        current_phase: 'Starting translation...',
+        items_completed: 0,
+        total_items: parseResult.entries.length
+      });
+
+      // Poll for translation status
+      const pollInterval = setInterval(async () => {
+        try {
+          const taskStatus = await apiClient.getTaskStatus(taskId);
+          setCurrentTask(taskStatus);
+
+          if (taskStatus.status === 'completed') {
+            clearInterval(pollInterval);
+            handleTranslationComplete(taskId);
+          } else if (taskStatus.status === 'failed') {
+            clearInterval(pollInterval);
+            throw new Error(taskStatus.error_message || 'Translation failed');
+          }
+        } catch (error) {
+          clearInterval(pollInterval);
+          throw error;
+        }
+      }, 2000);
+
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleTranslationComplete = async (taskId: string) => {
+    try {
+      const result = await apiClient.getTaskResult(taskId);
+      setCompletedResults({
+        translations: result.data.translated_entries,
+        glossaryInfo: dynamicGlossaryTask ? 'Dynamic glossary generated and used' : null,
+        processingTime: '45', // Mock data
+        totalEntries: parseResult.entries.length
+      });
+      setIsProcessing(false);
+      setCurrentTask(null);
+      setDynamicGlossaryTask(null);
+    } catch (error: any) {
+      console.error('Failed to get results:', error);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReset = () => {
+    setFileInfo(null);
+    setParseResult(null);
+    setIsProcessing(false);
+    setCurrentTask(null);
+    setDynamicGlossaryTask(null);
+    setIsGeneratingGlossary(false);
+    setCompletedResults(null);
+    setGlossaryMode('existing');
+    setBuildDynamicGlossary(false);
+  };
+
+  const getCurrentStep = () => {
+    if (isGeneratingGlossary) return 1;
+    if (currentTask) {
+      if (currentTask.current_phase?.includes('Phase 1')) return 2;
+      if (currentTask.current_phase?.includes('Phase 2')) return 3;
+      if (currentTask.current_phase?.includes('Phase 3')) return 4;
+      if (currentTask.current_phase?.includes('Phase 4')) return 5;
+      if (currentTask.status === 'completed') return 5;
+      return 2;
+    }
+    return 0;
+  };
+
+  if (!apiKey) {
+    return (
+      <div style={{ padding: '24px', textAlign: 'center' }}>
+        <Card>
+          <FileTextOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: 16 }} />
+          <Title level={4}>API Key Required</Title>
+          <Text type="secondary">Please configure your API key to use file translation.</Text>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show processing view
+  if (isProcessing) {
+    return (
+      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+        <Card title="Processing Translation">
+          <div style={{ textAlign: 'center' }}>
+            <Title level={4}>
+              {isGeneratingGlossary ? 'Generating Dynamic Glossary' : 'Translating File'}
+            </Title>
+            <Text type="secondary">
+              {isGeneratingGlossary 
+                ? 'Building specialized terminology database...' 
+                : 'AI-powered translation in progress...'
+              }
+            </Text>
+            
+            <div style={{ margin: '32px 0' }}>
+              <Steps
+                current={getCurrentStep()}
+                status="process"
+                style={{ marginBottom: 24 }}
+              >
+                {(glossaryMode === 'dynamic' || glossaryMode === 'both') && (
+                  <Step 
+                    title="Dynamic Glossary" 
+                    description="Terminology extraction"
+                    icon={<ThunderboltOutlined />}
+                  />
+                )}
+                <Step 
+                  title="Phase 1" 
+                  description="File preparation"
+                  icon={<FileTextOutlined />}
+                />
+                <Step 
+                  title="Phase 2" 
+                  description="Context analysis"
+                  icon={<RocketOutlined />}
+                />
+                <Step 
+                  title="Phase 3" 
+                  description="Translation processing"
+                  icon={<RocketOutlined />}
+                />
+                <Step 
+                  title="Complete" 
+                  description="Finalizing results"
+                  icon={<CheckCircleOutlined />}
+                />
+              </Steps>
+
+              <Progress
+                percent={isGeneratingGlossary ? (dynamicGlossaryTask?.progress || 0) : (currentTask?.progress || 0)}
+                status="active"
+                strokeColor={{ from: '#667eea', to: '#764ba2' }}
+                style={{ marginBottom: 16 }}
+              />
+
+              <Row gutter={16} style={{ marginTop: 24 }}>
+                <Col span={8}>
+                  <Statistic 
+                    title="Progress" 
+                    value={isGeneratingGlossary ? (dynamicGlossaryTask?.progress || 0) : (currentTask?.progress || 0)} 
+                    suffix="%" 
+                  />
+                </Col>
+                <Col span={8}>
+                  <Statistic 
+                    title="Items Processed" 
+                    value={isGeneratingGlossary ? (dynamicGlossaryTask?.items_completed || 0) : (currentTask?.items_completed || 0)}
+                    suffix={`/ ${parseResult?.entries.length || 0}`}
+                  />
+                </Col>
+                <Col span={8}>
+                  <Statistic 
+                    title="Current Phase" 
+                    value={isGeneratingGlossary ? "Glossary" : "Translation"}
+                  />
+                </Col>
+              </Row>
+
+              <div style={{ marginTop: 16 }}>
+                <Text type="secondary">
+                  {isGeneratingGlossary ? dynamicGlossaryTask?.current_phase : currentTask?.current_phase}
+                </Text>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show completion view
+  if (completedResults) {
+    return (
+      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+        <Card title="Translation Complete">
+          <div style={{ textAlign: 'center' }}>
+            <CheckCircleOutlined style={{ fontSize: '64px', color: '#52c41a', marginBottom: 16 }} />
+            <Title level={3}>File Translation Completed Successfully!</Title>
+            
+            <Row gutter={16} style={{ marginTop: 32, marginBottom: 32 }}>
+              <Col span={8}>
+                <Statistic 
+                  title="Translated Entries" 
+                  value={completedResults.totalEntries}
+                  prefix={<FileTextOutlined />}
+                />
+              </Col>
+              <Col span={8}>
+                <Statistic 
+                  title="Processing Time" 
+                  value={completedResults.processingTime}
+                  suffix="sec"
+                />
+              </Col>
+              <Col span={8}>
+                <Statistic 
+                  title="Glossary Enhancement" 
+                  value={completedResults.glossaryInfo ? "Applied" : "None"}
+                  valueStyle={{ color: completedResults.glossaryInfo ? '#3f8600' : '#8c8c8c' }}
+                />
+              </Col>
+            </Row>
+
+            <Space size="large">
+              <Button 
+                type="primary" 
+                onClick={() => {/* Download file */}}
+                icon={<UploadOutlined />}
+              >
+                Download Translated File
+              </Button>
+              <Button onClick={handleReset}>
+                Translate Another File
+              </Button>
+            </Space>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Main configuration view
+  return (
+    <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
+      <Card 
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <FileTextOutlined style={{ fontSize: 24, color: '#8b5cf6' }} />
+              <div>
+                <Title level={3} style={{ margin: 0, fontSize: 20 }}>
+                  File Translation
+                </Title>
+                <Text type="secondary" style={{ fontSize: 14 }}>
+                  AI-powered file translation with glossary enhancement
+                </Text>
+              </div>
+            </div>
+            <Tooltip title="How it works">
+              <Button 
+                type="text" 
+                icon={<QuestionCircleOutlined />} 
+                onClick={() => setHelpModalVisible(true)}
+                style={{ color: '#8c8c8c' }}
+              />
+            </Tooltip>
+          </div>
+        }
+        styles={{ body: { padding: '32px' } }}
+      >
+
+        {/* Temporary Demo Trigger */}
+        {!parseResult && (
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <Button 
+              type="primary"
+              onClick={() => {
+                setFileInfo({
+                  path: 'demo_game.xlsx',
+                  name: 'demo_game.xlsx',
+                  extension: '.xlsx',
+                  size: 12345
+                });
+                setParseResult({
+                  format: 'excel',
+                  entries: [
+                    { source: 'Game Start', metadata: { row: 1 } },
+                    { source: 'Health Potion', metadata: { row: 2 } },
+                    { source: 'Magic Sword', metadata: { row: 3 } },
+                    { source: 'Level Complete', metadata: { row: 4 } },
+                    { source: 'Save Game', metadata: { row: 5 } }
+                  ]
+                });
+              }}
+            >
+              🚀 Quick Demo Mode
+            </Button>
+          </div>
+        )}
+
+        {/* Language Selection */}
+        <Row gutter={24} style={{ marginBottom: 32 }}>
+          <Col span={11}>
+            <Text strong style={{ display: 'block', marginBottom: 10, fontSize: 15 }}>Source Language:</Text>
+            <LanguageSelector
+              value={sourceLanguage}
+              onChange={onSourceLanguageChange}
+              languages={languages}
+              placeholder="Select source language"
+            />
+          </Col>
+          <Col span={2} style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            height: '100%',
+            paddingTop: 32
+          }}>
+            <Button 
+              type="text" 
+              icon={<SwapOutlined />}
+              onClick={() => {
+                const temp = sourceLanguage;
+                onSourceLanguageChange(targetLanguage);
+                onTargetLanguageChange(temp);
+              }}
+              style={{ color: '#8b5cf6', fontSize: 18 }}
+              size="large"
+            />
+          </Col>
+          <Col span={11}>
+            <Text strong style={{ display: 'block', marginBottom: 10, fontSize: 15 }}>Target Language:</Text>
+            <LanguageSelector
+              value={targetLanguage}
+              onChange={onTargetLanguageChange}
+              languages={languages}
+              placeholder="Select target language"
+            />
+          </Col>
+        </Row>
+
+        {/* File Upload */}
+        <FileUpload 
+          onFileSelect={handleFileSelect}
+          fileInfo={fileInfo}
+          parseResult={parseResult}
+        />
+
+        {/* Demo Mode Button for Testing */}
+        {!parseResult && (
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            <Button 
+              type="dashed" 
+              onClick={() => {
+                setFileInfo({
+                  path: 'demo_game.xlsx',
+                  name: 'demo_game.xlsx',
+                  extension: '.xlsx',
+                  size: 12345
+                });
+                setParseResult({
+                  format: 'excel',
+                  entries: [
+                    { source: 'Game Start', metadata: { row: 1 } },
+                    { source: 'Health Potion', metadata: { row: 2 } },
+                    { source: 'Magic Sword', metadata: { row: 3 } },
+                    { source: 'Level Complete', metadata: { row: 4 } },
+                    { source: 'Save Game', metadata: { row: 5 } }
+                  ]
+                });
+              }}
+            >
+              📁 Demo Mode - Load Sample File
+            </Button>
+            <br />
+            <Text type="secondary" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
+              Test the consolidated UI with sample data
+            </Text>
+          </div>
+        )}
+
+        {/* Glossary Configuration */}
+        {parseResult && (
+          <>
+            <Divider orientation="left" style={{ marginTop: 32, marginBottom: 32 }}>
+              <Space>
+                <SettingOutlined style={{ color: '#8b5cf6' }} />
+                <span>Translation Configuration</span>
+              </Space>
+            </Divider>
+            
+            <Card 
+              title="Glossary Options" 
+              style={{ marginBottom: 32, marginTop: 24 }}
+              styles={{ 
+                header: { paddingBottom: 8 },
+                body: { paddingTop: 24 }
+              }}
+            >
+              <Radio.Group
+                value={glossaryMode}
+                onChange={(e) => setGlossaryMode(e.target.value)}
+                style={{ width: '100%' }}
+              >
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Radio value="none">
+                    <Space>
+                      <span>No Glossary</span>
+                      <Text type="secondary">- Standard AI translation only</Text>
+                    </Space>
+                  </Radio>
+                  
+                  <Radio value="existing">
+                    <Space>
+                      <span>Use Existing Glossary</span>
+                      <Text type="secondary">- Apply pre-built terminology</Text>
+                    </Space>
+                  </Radio>
+                  
+                  <Radio value="dynamic">
+                    <Space>
+                      <span>Build Dynamic Glossary</span>
+                      <Text type="secondary">- Auto-generate from file content</Text>
+                    </Space>
+                  </Radio>
+                  
+                  <Radio value="both">
+                    <Space>
+                      <span>Use Both</span>
+                      <Text type="secondary">- Combine existing + dynamic glossaries</Text>
+                    </Space>
+                  </Radio>
+                </Space>
+              </Radio.Group>
+
+              {(glossaryMode === 'existing' || glossaryMode === 'both') && (
+                <div style={{ 
+                  marginTop: 20, 
+                  padding: 20, 
+                  background: 'rgba(139, 92, 246, 0.03)', 
+                  borderRadius: 8, 
+                  border: '1px solid rgba(139, 92, 246, 0.15)',
+                  borderLeft: '4px solid #8b5cf6'
+                }}>
+                  {apiKey || window.location.hostname === 'localhost' ? (
+                    <GlossarySelector
+                      selectedGlossaries={selectedGlossaries}
+                      onGlossariesChange={onSelectedGlossariesChange}
+                      sourceLanguage={sourceLanguage}
+                      targetLanguage={targetLanguage}
+                      onSourceLanguageChange={onSourceLanguageChange}
+                      onTargetLanguageChange={onTargetLanguageChange}
+                      onStartTranslation={() => {}} // Not used in this context
+                      onGenerateGlossary={() => {}} // Not used in this context
+                      apiKey={apiKey}
+                      hideLanguageSelector={true}
+                      hideButtons={true}
+                    />
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '16px' }}>
+                      <Text type="secondary">
+                        Please set your API key in Settings to use existing glossaries.
+                      </Text>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+
+            {/* Start Translation Button */}
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <Button
+                type="primary"
+                size="large"
+                icon={<RocketOutlined />}
+                onClick={handleStartProcess}
+                style={{ 
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none',
+                  height: '48px',
+                  padding: '0 32px',
+                  fontSize: '16px'
+                }}
+              >
+                Start Translation Process
+              </Button>
+              <div style={{ 
+                marginTop: 16, 
+                padding: '12px 20px', 
+                background: 'rgba(139, 92, 246, 0.1)', 
+                borderRadius: 8,
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                display: 'inline-block'
+              }}>
+                <Text style={{ color: '#c084fc', fontSize: 14, fontWeight: 500 }}>
+                  ✓ {parseResult.entries.length} entries ready for translation
+                </Text>
+                {(glossaryMode === 'dynamic' || glossaryMode === 'both') && (
+                  <Text style={{ color: '#a0aec0', fontSize: 13, display: 'block', marginTop: 4 }}>
+                    Dynamic glossary will be generated first
+                  </Text>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </Card>
+
+      {/* Help Modal */}
+      <Modal
+        title="File Translation Guide"
+        open={helpModalVisible}
+        onCancel={() => setHelpModalVisible(false)}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setHelpModalVisible(false)}>
+            Got it
+          </Button>
+        ]}
+        width={600}
+      >
+        <div style={{ lineHeight: '1.6' }}>
+          <Title level={4}>How File Translation Works</Title>
+          <p>Our AI-powered system translates your game files while preserving structure and context.</p>
+          
+          <Title level={5}>Glossary Options:</Title>
+          <ul>
+            <li><strong>No Glossary:</strong> Standard AI translation only</li>
+            <li><strong>Use Existing:</strong> Apply pre-built terminology for consistency</li>
+            <li><strong>Build Dynamic:</strong> Auto-generate glossary from your file content</li>
+            <li><strong>Use Both:</strong> Combine existing + dynamic for maximum accuracy</li>
+          </ul>
+
+          <Title level={5}>Supported Formats:</Title>
+          <p>Excel (.xlsx, .xls), CSV (.csv), JSON (.json), XML (.xml), Gettext (.po, .pot)</p>
+        </div>
+      </Modal>
+    </div>
+  );
+};
+
+export default ConsolidatedFileTranslation;

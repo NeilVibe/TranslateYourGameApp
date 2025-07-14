@@ -5,23 +5,194 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Translate Your Game</title>
     <style>
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-                sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            background: #0f0f23;
-        }
-        
-        #root {
-            height: 100vh;
-            width: 100vw;
-        }
+        /* Inline critical styles for faster load */
+        body { margin: 0; background: #0f0f23; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>Translate Your Game</h1>
+            <div class="header-actions">
+                <button id="settings-btn" class="btn btn-secondary">Settings</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Tab Navigation -->
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="file-translation">File Translation</button>
+                <button class="tab-btn" data-tab="glossary-management">Glossary Management</button>
+                <button class="tab-btn" data-tab="chatbot-translation">Chatbot Translation</button>
+            </nav>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- File Translation Tab -->
+                <div id="file-translation" class="tab-pane active">
+                    <div class="upload-section">
+                        <div class="upload-area" id="upload-area">
+                            <div class="upload-icon">📁</div>
+                            <h3>Upload File for Translation</h3>
+                            <p>Drag and drop your file here or click to browse</p>
+                            <input type="file" id="file-input" hidden accept=".xlsx,.xls,.csv,.json,.xml,.po,.pot">
+                            <button id="browse-btn" class="btn btn-primary">Browse Files</button>
+                        </div>
+                    </div>
+
+                    <div class="translation-config" id="translation-config" style="display: none;">
+                        <h3>Translation Configuration</h3>
+                        <div class="config-row">
+                            <div class="config-item">
+                                <label>Source Language:</label>
+                                <select id="source-lang">
+                                    <option value="en">English</option>
+                                    <option value="ko">Korean</option>
+                                    <option value="ja">Japanese</option>
+                                    <option value="zh">Chinese</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                </select>
+                            </div>
+                            <div class="config-item">
+                                <label>Target Language:</label>
+                                <select id="target-lang">
+                                    <option value="ko">Korean</option>
+                                    <option value="en">English</option>
+                                    <option value="ja">Japanese</option>
+                                    <option value="zh">Chinese</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="config-row">
+                            <div class="config-item">
+                                <label>Translation Mode:</label>
+                                <select id="translation-mode">
+                                    <option value="simple">Simple Translation</option>
+                                    <option value="smart">Smart Translation (with glossary)</option>
+                                </select>
+                            </div>
+                            <div class="config-item">
+                                <label>Select Glossaries:</label>
+                                <div id="glossary-selector">
+                                    <div class="glossary-loading">Loading glossaries...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-actions">
+                            <button id="start-translation" class="btn btn-primary">Start Translation</button>
+                            <button id="cancel-translation" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+
+                    <div class="translation-progress" id="translation-progress" style="display: none;">
+                        <h3>Translation Progress</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="progress-text" id="progress-text">0%</div>
+                        <div class="progress-details" id="progress-details"></div>
+                    </div>
+
+                    <div class="translation-result" id="translation-result" style="display: none;">
+                        <h3>Translation Complete</h3>
+                        <div class="result-actions">
+                            <button id="download-result" class="btn btn-primary">Download Result</button>
+                            <button id="new-translation" class="btn btn-secondary">New Translation</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Glossary Management Tab -->
+                <div id="glossary-management" class="tab-pane">
+                    <div class="glossary-header">
+                        <h3>Glossary Management</h3>
+                        <button id="create-glossary" class="btn btn-primary">Create New Glossary</button>
+                    </div>
+
+                    <div class="glossary-list" id="glossary-list">
+                        <div class="glossary-loading">Loading glossaries...</div>
+                    </div>
+
+                    <div class="glossary-detail" id="glossary-detail" style="display: none;">
+                        <div class="glossary-detail-header">
+                            <h4 id="glossary-name"></h4>
+                            <div class="glossary-actions">
+                                <button id="edit-glossary" class="btn btn-secondary">Edit</button>
+                                <button id="delete-glossary" class="btn btn-danger">Delete</button>
+                                <button id="back-to-list" class="btn btn-secondary">Back to List</button>
+                            </div>
+                        </div>
+                        <div class="glossary-entries" id="glossary-entries"></div>
+                    </div>
+                </div>
+
+                <!-- Chatbot Translation Tab -->
+                <div id="chatbot-translation" class="tab-pane">
+                    <div class="chatbot-header">
+                        <h3>Chatbot Translation</h3>
+                        <div class="language-selector">
+                            <select id="chatbot-source">
+                                <option value="en">English</option>
+                                <option value="ko">Korean</option>
+                                <option value="ja">Japanese</option>
+                                <option value="zh">Chinese</option>
+                            </select>
+                            <span>→</span>
+                            <select id="chatbot-target">
+                                <option value="ko">Korean</option>
+                                <option value="en">English</option>
+                                <option value="ja">Japanese</option>
+                                <option value="zh">Chinese</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="chatbot-messages" id="chatbot-messages">
+                        <div class="welcome-message">
+                            <h4>Welcome to Chatbot Translation!</h4>
+                            <p>Type any text below and get instant translations.</p>
+                        </div>
+                    </div>
+
+                    <div class="chatbot-input">
+                        <textarea id="chatbot-text" placeholder="Enter text to translate..."></textarea>
+                        <button id="translate-text" class="btn btn-primary">Translate</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Settings</h3>
+                    <button id="close-settings" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-item">
+                        <label>API Key:</label>
+                        <input type="password" id="api-key-input" placeholder="Enter your API key">
+                        <button id="save-api-key" class="btn btn-primary">Save</button>
+                    </div>
+                    <div class="setting-item">
+                        <label>API Status:</label>
+                        <div id="api-status">Checking...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
 </body>
 </html>
