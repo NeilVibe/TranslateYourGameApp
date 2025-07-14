@@ -299,6 +299,186 @@ body {
   padding: 48px;
 }
 
+/* Professional Glossary Detail View - Phrase/MemoQ Style */
+.glossary-detail {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.glossary-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #2d3748;
+  background: #1a202c;
+}
+
+.glossary-detail-header h4 {
+  margin: 0;
+  color: #4299e1;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.glossary-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.glossary-actions .btn {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+/* Professional Data Table */
+.glossary-table-container {
+  background: #16213e;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #2d3748;
+}
+
+.glossary-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+}
+
+.glossary-table thead {
+  background: #1a202c;
+  border-bottom: 2px solid #2d3748;
+}
+
+.glossary-table th {
+  padding: 16px 20px;
+  text-align: left;
+  font-weight: 600;
+  color: #a0aec0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-right: 1px solid #2d3748;
+}
+
+.glossary-table th:last-child {
+  border-right: none;
+}
+
+.glossary-table tbody tr {
+  border-bottom: 1px solid #2d3748;
+  transition: all 0.2s ease;
+}
+
+.glossary-table tbody tr:hover {
+  background: #1a202c;
+}
+
+.glossary-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.glossary-table td {
+  padding: 16px 20px;
+  color: #e2e8f0;
+  font-size: 14px;
+  border-right: 1px solid #2d3748;
+  vertical-align: top;
+  position: relative;
+}
+
+.glossary-table td:last-child {
+  border-right: none;
+}
+
+/* Inline Editing */
+.glossary-table td[contenteditable="true"] {
+  background: #0f1419;
+  border: 2px solid #4299e1;
+  outline: none;
+  border-radius: 4px;
+  padding: 14px 18px;
+}
+
+.glossary-table td[contenteditable="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* Empty State */
+.glossary-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #a0aec0;
+}
+
+.glossary-empty h3 {
+  margin: 0 0 8px;
+  color: #4299e1;
+  font-size: 18px;
+}
+
+.glossary-empty p {
+  margin: 0 0 20px;
+  font-size: 14px;
+}
+
+/* Add Entry Row */
+.add-entry-row {
+  background: #0f1419;
+  border: 2px dashed #4299e1;
+}
+
+.add-entry-row td {
+  padding: 20px;
+  text-align: center;
+  color: #4299e1;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-entry-row:hover td {
+  background: #1a202c;
+  color: #63b3ed;
+}
+
+/* Action Buttons in Table */
+.table-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.table-actions .btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  min-width: 60px;
+}
+
+/* Loading Animation */
+.glossary-table-loading {
+  text-align: center;
+  padding: 40px;
+  color: #a0aec0;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #2d3748;
+  border-radius: 50%;
+  border-top-color: #4299e1;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Chatbot */
 .chatbot-header {
   display: flex;
@@ -410,7 +590,8 @@ body {
   margin-bottom: 20px;
 }
 
-.setting-item input {
+.setting-item input,
+.setting-item select {
   width: 100%;
   padding: 8px 12px;
   background: #1a202c;
@@ -418,6 +599,16 @@ body {
   border-radius: 6px;
   color: #e2e8f0;
   margin-top: 8px;
+  font-size: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #2d3748;
 }
 
 #api-status {

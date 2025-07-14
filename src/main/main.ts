@@ -17,8 +17,12 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, '../preload/preload.js'),
-      webSecurity: false // Allow local development
+      preload: path.join(__dirname, './preload/preload.js'),
+      webSecurity: true, // Enterprise-grade security
+      allowRunningInsecureContent: false,
+      experimentalFeatures: false,
+      plugins: false,
+      devTools: process.env.NODE_ENV === 'development'
     },
     show: false, // Don't show until ready
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
@@ -39,8 +43,10 @@ function createWindow() {
   // Load the built React app (standalone)
   mainWindow.loadFile(path.join(__dirname, './index.html'));
   
-  // Always open dev tools to debug
-  mainWindow.webContents.openDevTools();
+  // Only open dev tools in development
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.webContents.openDevTools();
+  }
 
   // Error handling
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {

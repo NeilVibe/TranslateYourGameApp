@@ -394,15 +394,40 @@ function initializeGlossaryManagement() {
     const editBtn = document.getElementById('edit-glossary');
     const deleteBtn = document.getElementById('delete-glossary');
     
+    // Modal elements
+    const closeCreateModal = document.getElementById('close-create-glossary');
+    const confirmCreateBtn = document.getElementById('confirm-create-glossary');
+    const cancelCreateBtn = document.getElementById('cancel-create-glossary');
+    const nameInput = document.getElementById('glossary-name-input');
+    
     createBtn.addEventListener('click', createNewGlossary);
     backBtn.addEventListener('click', showGlossaryList);
     editBtn.addEventListener('click', editCurrentGlossary);
     deleteBtn.addEventListener('click', deleteCurrentGlossary);
+    
+    // Modal event listeners
+    closeCreateModal.addEventListener('click', () => {
+        document.getElementById('create-glossary-modal').style.display = 'none';
+    });
+    
+    cancelCreateBtn.addEventListener('click', () => {
+        document.getElementById('create-glossary-modal').style.display = 'none';
+    });
+    
+    confirmCreateBtn.addEventListener('click', confirmCreateGlossary);
+    
+    // Enter key support for name input
+    nameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            confirmCreateGlossary();
+        }
+    });
 }
 
 // Load glossaries
 async function loadGlossaries() {
     try {
+        console.log('🔄 Loading glossaries...');
         const response = await fetch(`${API_BASE_URL}/glossaries`, {
             headers: { 'X-API-Key': API_KEY }
         });
@@ -410,10 +435,12 @@ async function loadGlossaries() {
         if (!response.ok) throw new Error('Failed to load glossaries');
         
         const responseData = await response.json();
+        console.log('📊 Glossaries API response:', responseData);
         
         // Handle API v1 response format
         if (responseData.status === 'success' && responseData.data) {
             availableGlossaries = responseData.data.glossaries || [];
+            console.log('✅ Loaded glossaries:', availableGlossaries.length);
         } else {
             throw new Error('Invalid response format');
         }
@@ -423,26 +450,51 @@ async function loadGlossaries() {
         updateGlossarySelector();
         
     } catch (error) {
-        console.error('Error loading glossaries:', error);
+        console.error('❌ Error loading glossaries:', error);
+        // Show error in UI
+        const listEl = document.getElementById('glossary-list');
+        if (listEl) {
+            listEl.innerHTML = '<div class="glossary-loading" style="color: #f56565;">Failed to load glossaries. Check API connection.</div>';
+        }
     }
 }
 
 // Update glossary list UI
 function updateGlossaryList() {
+    console.log('🎨 Updating glossary list UI...');
     const listEl = document.getElementById('glossary-list');
     
+    if (!listEl) {
+        console.error('❌ glossary-list element not found!');
+        return;
+    }
+    
     if (availableGlossaries.length === 0) {
+        console.log('📝 No glossaries found, showing empty message');
         listEl.innerHTML = '<div class="glossary-loading">No glossaries found. Create your first glossary!</div>';
         return;
     }
     
+    console.log('📋 Rendering', availableGlossaries.length, 'glossaries');
     listEl.innerHTML = availableGlossaries.map(glossary => `
-        <div class="glossary-item" onclick="viewGlossary(${glossary.id})">
+        <div class="glossary-item" data-glossary-id="${glossary.id}">
             <h4>${glossary.name}</h4>
             <p>${glossary.entry_count || 0} entries</p>
             <p>Created: ${new Date(glossary.created_at).toLocaleDateString()}</p>
         </div>
     `).join('');
+    
+    // Add event delegation for glossary items
+    listEl.addEventListener('click', (e) => {
+        const glossaryItem = e.target.closest('.glossary-item');
+        if (glossaryItem) {
+            const glossaryId = parseInt(glossaryItem.getAttribute('data-glossary-id'));
+            if (glossaryId) {
+                viewGlossary(glossaryId);
+            }
+        }
+    });
+    console.log('✅ Glossary list updated successfully');
 }
 
 // Update glossary selector
@@ -523,10 +575,32 @@ function showGlossaryList() {
     document.getElementById('glossary-detail').style.display = 'none';
 }
 
-// Create new glossary
-async function createNewGlossary() {
-    const name = prompt('Enter glossary name:');
-    if (!name) return;
+// Show create glossary modal
+function createNewGlossary() {
+    const modal = document.getElementById('create-glossary-modal');
+    modal.style.display = 'flex';
+    
+    // Clear previous values
+    document.getElementById('glossary-name-input').value = '';
+    document.getElementById('glossary-source-lang').value = 'ko';
+    document.getElementById('glossary-target-lang').value = 'en';
+    
+    // Focus on name input
+    setTimeout(() => {
+        document.getElementById('glossary-name-input').focus();
+    }, 100);
+}
+
+// Actually create the glossary
+async function confirmCreateGlossary() {
+    const name = document.getElementById('glossary-name-input').value.trim();
+    const sourceLang = document.getElementById('glossary-source-lang').value;
+    const targetLang = document.getElementById('glossary-target-lang').value;
+    
+    if (!name) {
+        showNotification('error', 'Please enter a glossary name');
+        return;
+    }
     
     try {
         const response = await fetch(`${API_BASE_URL}/glossaries`, {
@@ -535,10 +609,17 @@ async function createNewGlossary() {
                 'Content-Type': 'application/json',
                 'X-API-Key': API_KEY
             },
-            body: JSON.stringify({ name })
+            body: JSON.stringify({ 
+                name,
+                source_language: sourceLang,
+                target_language: targetLang
+            })
         });
         
         if (!response.ok) throw new Error('Failed to create glossary');
+        
+        // Close modal
+        document.getElementById('create-glossary-modal').style.display = 'none';
         
         showNotification('success', 'Glossary created successfully!');
         await loadGlossaries();
