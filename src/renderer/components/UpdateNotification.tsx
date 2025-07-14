@@ -10,7 +10,7 @@ const UpdateNotification: React.FC = () => {
 
   useEffect(() => {
     // Listen for update events from main process
-    const handleUpdateAvailable = (event: any, info: any) => {
+    const handleUpdateAvailable = (info: any) => {
       setUpdateAvailable(true);
       setUpdateVersion(info.version);
       
@@ -22,11 +22,11 @@ const UpdateNotification: React.FC = () => {
       });
     };
 
-    const handleDownloadProgress = (event: any, progressObj: any) => {
-      setDownloadProgress(Math.round(progressObj.percent));
+    const handleDownloadProgress = (progress: any) => {
+      setDownloadProgress(Math.round(progress.percent));
     };
 
-    const handleUpdateDownloaded = (event: any, info: any) => {
+    const handleUpdateDownloaded = (info: any) => {
       setUpdateReady(true);
       setUpdateAvailable(false);
       
@@ -53,7 +53,7 @@ const UpdateNotification: React.FC = () => {
       });
     };
 
-    const handleUpdateError = (event: any, error: any) => {
+    const handleUpdateError = (error: any) => {
       notification.error({
         message: 'Update Error',
         description: 'Failed to check for updates. Please try again later.',

@@ -1,8 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:5002/api/v1'
-  : 'https://translateyourgame.com/api/v1';
+const API_BASE_URL = 'http://localhost:5002/api/v1';
 
 export interface TranslateRequest {
   text: string;

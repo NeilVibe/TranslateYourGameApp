@@ -5,6 +5,9 @@ import * as fs from 'fs';
 
 let mainWindow: BrowserWindow | null = null;
 
+// Disable GPU acceleration to fix display issues
+app.disableHardwareAcceleration();
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -14,10 +17,13 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, '../preload/preload.js')
+      preload: path.join(__dirname, '../preload/preload.js'),
+      webSecurity: false // Allow local development
     },
     show: false, // Don't show until ready
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default'
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    autoHideMenuBar: true, // Hide the menu bar
+    frame: true // Keep window frame but no menu
   });
 
   // Show window when ready
@@ -27,13 +33,14 @@ function createWindow() {
     }
   });
 
-  // Load the React app
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:3000');
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname, './index.html'));
-  }
+  // Remove menu completely
+  mainWindow.setMenu(null);
+  
+  // Load the built React app (standalone)
+  mainWindow.loadFile(path.join(__dirname, './index.html'));
+  
+  // Always open dev tools to debug
+  mainWindow.webContents.openDevTools();
 
   // Error handling
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {

@@ -57,13 +57,10 @@ export const webAPI = {
   },
 
   getApiKey: (): Promise<string | null> => {
-    // Auto-inject admin API key for localhost development
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      const adminApiKey = 'tk_live_7IezEZ3-pLTSnFsiW7kOkfXIIKWOEhZp9r1H-TWv';
-      localStorage.setItem('apiKey', adminApiKey);
-      return Promise.resolve(adminApiKey);
-    }
-    return Promise.resolve(localStorage.getItem('apiKey'));
+    // Auto-inject admin API key for desktop app and localhost development
+    const adminApiKey = 'tk_live_7IezEZ3-pLTSnFsiW7kOkfXIIKWOEhZp9r1H-TWv';
+    localStorage.setItem('apiKey', adminApiKey);
+    return Promise.resolve(adminApiKey);
   },
 
   setApiKey: (apiKey: string): Promise<boolean> => {
