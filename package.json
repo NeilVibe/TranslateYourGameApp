@@ -51,7 +51,7 @@
           "arch": ["x64", "arm64"]
         }
       ],
-      "icon": "assets/icon.png",
+      "icon": "assets/icon-512.png",
       "category": "public.app-category.developer-tools"
     },
     "linux": {
