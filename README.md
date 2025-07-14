@@ -8,9 +8,8 @@ Professional game localization desktop application powered by AI translation wit
 
 ### Supported Platforms
 
-- **Windows** - `.exe` installer (64-bit)
-- **macOS** - `.dmg` installer (Intel & Apple Silicon)
-- **Linux** - `.AppImage` (portable, no installation required)
+- **Windows** - `.exe` installer (64-bit) 
+- **macOS** - `.zip` archive (Intel & Apple Silicon)
 
 ## ✨ Features
 
@@ -23,10 +22,21 @@ Professional game localization desktop application powered by AI translation wit
 
 ## 🚀 Quick Start
 
-1. **Download** the app for your platform
-2. **Install** (Windows/Mac) or run directly (Linux AppImage)
-3. **Connect** to your Translate Your Game server
-4. **Upload** your game files and start translating!
+### Windows Installation
+1. **Download** `Translate Your Game Setup.exe` from [Releases](../../releases/latest)
+2. **Run** the installer and follow the setup wizard
+3. **Launch** the app from Start Menu or Desktop shortcut
+
+### Mac Installation  
+1. **Download** `Translate Your Game-mac.zip` from [Releases](../../releases/latest)
+2. **Extract** the ZIP file 
+3. **Drag** `Translate Your Game.app` to your Applications folder
+4. **Launch** from Applications (first time: right-click → Open to bypass Gatekeeper)
+
+### Getting Started
+1. **Launch** the desktop app
+2. **Enter** your API server URL (e.g., `http://localhost:5002` for local development)
+3. **Upload** your game files and start translating!
 
 ## 🛠 Development
 
