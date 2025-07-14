@@ -2,7 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./build/preload",
-    "lib": ["ES2020"]
+    "lib": ["ES2020"],
+    "rootDir": "./src/preload"
   },
   "include": [
     "src/preload/**/*"
