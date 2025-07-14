@@ -122,8 +122,8 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          windows-app/dist/*.exe
-          mac-app/dist/*.zip
+          windows-app/*.exe
+          mac-app/*.zip
         draft: false
         prerelease: false
         generate_release_notes: true
