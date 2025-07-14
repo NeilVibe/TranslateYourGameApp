@@ -114,14 +114,6 @@ jobs:
           dist/mac/
           dist/mac-arm64/
 
-    - name: Upload Linux artifact
-      if: matrix.platform == 'linux'
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-app
-        path: |
-          dist/*.AppImage
-          dist/linux-unpacked/
 
   release:
     needs: build
@@ -141,7 +133,6 @@ jobs:
         files: |
           windows-app/dist/*.exe
           mac-app/dist/*.zip
-          linux-app/dist/*.AppImage
         draft: false
         prerelease: false
         generate_release_notes: true
