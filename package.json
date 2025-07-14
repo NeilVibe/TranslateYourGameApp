@@ -6,8 +6,8 @@
   "scripts": {
     "start": "npm run build:main && electron .",
     "build": "npm run build:renderer && npm run build:main && npm run build:preload",
-    "build:main": "tsc src/main/main.ts --outDir build --target ES2020 --module commonjs --moduleResolution node --esModuleInterop --strict --skipLibCheck",
-    "build:preload": "tsc src/preload/preload.ts --outDir build/preload --target ES2020 --module commonjs --moduleResolution node --esModuleInterop --strict --skipLibCheck",
+    "build:main": "tsc --project tsconfig.main.json",
+    "build:preload": "tsc --project tsconfig.preload.json",
     "build:renderer": "webpack --mode production --stats errors-warnings",
     "build:win": "npm run build && electron-builder --win --publish=never",
     "build:mac": "npm run build && electron-builder --mac --publish=never",

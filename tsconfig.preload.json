@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./build/preload",
+    "lib": ["ES2020"]
+  },
+  "include": [
+    "src/preload/**/*"
+  ],
+  "exclude": [
+    "src/renderer/**/*",
+    "src/main/**/*"
+  ]
+}

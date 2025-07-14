@@ -32,6 +32,9 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+      
+    - name: Install TypeScript globally
+      run: npm install -g typescript
 
     - name: Clean build directory
       run: |
@@ -43,14 +46,15 @@ jobs:
         fi
       shell: bash
 
-    - name: Build TypeScript Main Process
-      run: npm run build:main
-
-    - name: Build TypeScript Preload Process
-      run: npm run build:preload
-
-    - name: Build Webpack Renderer
-      run: npm run build:renderer
+    - name: Build All Components
+      run: |
+        echo "=== Starting build process ==="
+        echo "Node version: $(node --version)"
+        echo "NPM version: $(npm --version)"
+        echo "TypeScript version: $(tsc --version)"
+        echo ""
+        echo "=== Running npm run build ==="
+        npm run build
 
     - name: Verify build files
       run: |
