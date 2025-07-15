@@ -76,10 +76,10 @@ jobs:
         echo ""
         if [ "${{ matrix.platform }}" = "win" ]; then
           echo "Building for Windows..."
-          npm run build:win
+          npm run release:win
         else
           echo "Building for Mac..."
-          npm run build:mac
+          npm run release:mac
         fi
         echo ""
         echo "=== Build completed, checking dist directory ==="
@@ -93,6 +93,7 @@ jobs:
         name: windows-app
         path: |
           dist/*.exe
+          dist/*.yml
           dist/win-unpacked/
 
     - name: Upload Mac artifact
@@ -102,6 +103,7 @@ jobs:
         name: mac-app
         path: |
           dist/*.zip
+          dist/*.yml
           dist/mac/
           dist/mac-arm64/
 
@@ -125,7 +127,9 @@ jobs:
       with:
         files: |
           windows-app/*.exe
+          windows-app/*.yml
           mac-app/*.zip
+          mac-app/*.yml
         draft: false
         prerelease: false
         generate_release_notes: true
