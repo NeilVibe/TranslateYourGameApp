@@ -198,7 +198,7 @@ ipcMain.handle('app:screenshot', async () => {
 
 // API key storage (secure storage in production)
 // Import secure config
-const secureConfig = require('./secureConfig');
+import secureConfig from './secureConfig';
 
 ipcMain.handle('storage:getApiKey', async () => {
   return secureConfig.getApiKey();
