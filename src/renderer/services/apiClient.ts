@@ -91,14 +91,15 @@ class APIClient {
   }
 
   // Single text translation
-  async translateText(request: TranslateRequest) {
-    const response = await this.client.post('/translate', request);
+  async translateText(request: TranslateRequest, timeout?: number) {
+    const config = timeout ? { timeout } : {};
+    const response = await this.client.post('/translate', request, config);
     return response.data;
   }
 
   // Single text translation (alias for ChatbotTranslation component)
-  async translateSingle(request: TranslateRequest) {
-    return this.translateText(request);
+  async translateSingle(request: TranslateRequest, timeout?: number) {
+    return this.translateText(request, timeout);
   }
 
   // Batch translation

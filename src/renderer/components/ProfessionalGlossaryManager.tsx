@@ -19,6 +19,7 @@ interface GlossaryEntry {
   source_text: string;
   target_text: string;
   created_at: string;
+  entry_type?: string;
   character_count?: number;
   is_line_entry?: boolean;
 }
@@ -45,6 +46,8 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   const [selectedGlossary, setSelectedGlossary] = useState<Glossary | null>(null);
   const [entries, setEntries] = useState<GlossaryEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreEntries, setHasMoreEntries] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingEntry, setEditingEntry] = useState<GlossaryEntry | null>(null);
   const [inlineEditingId, setInlineEditingId] = useState<number | null>(null);
@@ -69,7 +72,10 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
 
   useEffect(() => {
     if (selectedGlossary) {
-      loadGlossaryEntries(selectedGlossary.id);
+      setEntries([]);
+      setCurrentPage(1);
+      setHasMoreEntries(true);
+      loadGlossaryEntries(selectedGlossary.id, 1, true);
     }
   }, [selectedGlossary]);
 
@@ -94,10 +100,10 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     }
   };
 
-  const loadGlossaryEntries = async (glossaryId: number) => {
+  const loadGlossaryEntries = async (glossaryId: number, page: number = 1, reset: boolean = false) => {
     try {
       setLoading(true);
-      const response = await fetch(`${apiBaseUrl}/glossaries/${glossaryId}/entries?include_line_entries=true`, {
+      const response = await fetch(`${apiBaseUrl}/glossaries/${glossaryId}/entries?include_line_entries=true&page=${page}&per_page=50`, {
         headers: { 'X-API-Key': apiKey }
       });
       
@@ -108,9 +114,18 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
         const entriesWithMetadata = (data.data.entries || []).map((entry: GlossaryEntry) => ({
           ...entry,
           character_count: entry.source_text.length,
-          is_line_entry: entry.source_text.length > 100 // Simple heuristic
+          is_line_entry: entry.entry_type === 'line' // Use actual entry type from API
         }));
-        setEntries(entriesWithMetadata);
+        
+        if (reset) {
+          setEntries(entriesWithMetadata);
+        } else {
+          setEntries(prev => [...prev, ...entriesWithMetadata]);
+        }
+        
+        // Check if there are more entries
+        setHasMoreEntries(entriesWithMetadata.length === 50);
+        setCurrentPage(page);
       }
     } catch (error) {
       console.error('Error loading entries:', error);
@@ -142,8 +157,8 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
       }
     });
 
-    // Simple alphabetical sorting
-    filtered.sort((a, b) => a.source_text.localeCompare(b.source_text));
+    // Sort by length (shortest first) by default
+    filtered.sort((a, b) => a.source_text.length - b.source_text.length);
     return filtered;
   }, [entries, searchText, searchMode]);
 
@@ -178,7 +193,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     setInlineEditingId(entry.id);
     setInlineEditValue({
       source: entry.source_text,
-      target: entry.target_text
+      target: entry.target_text.replace(/\n/g, '\\n')  // Convert actual newlines to escaped for consistent editing
     });
   };
 
@@ -194,7 +209,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
         },
         body: JSON.stringify({
           source_text: inlineEditValue.source,
-          target_text: inlineEditValue.target
+          target_text: inlineEditValue.target.replace(/\\n/g, '\n')  // Convert escaped back to actual newlines for storage
         })
       });
       
@@ -217,6 +232,36 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     setInlineEditingId(null);
     setInlineEditValue({source: '', target: ''});
   };
+
+  // Handle keyboard shortcuts for editing
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (inlineEditingId !== null) {
+        if (event.key === 'Escape') {
+          cancelInlineEdit();
+        } else if (event.key === 'Enter' && event.ctrlKey) {
+          // Ctrl+Enter to save
+          saveInlineEdit();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [inlineEditingId]);
+
+  // Handle scroll to load more entries
+  const handleTableScroll = useCallback((e: any) => {
+    const { target } = e;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 10) {
+      // Near bottom, load more if available
+      if (hasMoreEntries && !loading && selectedGlossary) {
+        loadGlossaryEntries(selectedGlossary.id, currentPage + 1, false);
+      }
+    }
+  }, [hasMoreEntries, loading, selectedGlossary, currentPage]);
 
   // Bulk operations
   const handleBulkDelete = async () => {
@@ -398,7 +443,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
       title: 'Source Text',
       dataIndex: 'source_text',
       key: 'source_text',
-      width: '35%',
+      width: '42%',
       render: (text: string, record: GlossaryEntry) => {
         const isEditing = inlineEditingId === record.id;
         
@@ -411,7 +456,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
           />
         ) : (
           <div onClick={() => startInlineEdit(record)} style={{ cursor: 'pointer', minHeight: '22px' }}>
-            <Text>{text}</Text>
+            <Text style={{ whiteSpace: 'pre-wrap' }}>{text.replace(/\\n/g, '\n')}</Text>
             <div style={{ fontSize: '12px', color: '#8b949e', marginTop: '2px' }}>
               <Tag color={record.character_count! <= 20 ? 'green' : record.character_count! <= 100 ? 'orange' : 'red'}>
                 {record.character_count} chars
@@ -426,7 +471,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
       title: 'Target Text',
       dataIndex: 'target_text',
       key: 'target_text',
-      width: '35%',
+      width: '42%',
       render: (text: string, record: GlossaryEntry) => {
         const isEditing = inlineEditingId === record.id;
         
@@ -439,7 +484,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
           />
         ) : (
           <div onClick={() => startInlineEdit(record)} style={{ cursor: 'pointer', minHeight: '22px' }}>
-            <Text>{text}</Text>
+            <Text style={{ whiteSpace: 'pre-wrap' }}>{text.replace(/\\n/g, '\n')}</Text>
           </div>
         );
       },
@@ -447,7 +492,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     {
       title: 'Actions',
       key: 'actions',
-      width: '30%',
+      width: '16%',
       render: (_: any, record: GlossaryEntry) => {
         const isEditing = inlineEditingId === record.id;
         
@@ -528,22 +573,19 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
 
       {selectedGlossary && (
         <>
-          {/* Clean Search Bar */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '12px', 
-            marginBottom: '16px',
-            flexWrap: 'wrap'
-          }}>
+          {/* Search and Controls */}
+          <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
             <Input
               placeholder="Search glossary entries..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              style={{ minWidth: '300px', flex: 1, maxWidth: '500px' }}
+              style={{ 
+                minWidth: '400px', 
+                flex: 2, 
+                maxWidth: '700px'
+              }}
               allowClear
               size="large"
-              prefix={<SearchOutlined />}
             />
             <Select
               value={searchMode}
@@ -555,31 +597,31 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
               <Option value="exact">Exact Match</Option>
               <Option value="embedding">AI Search</Option>
             </Select>
-            <Space size="middle">
-                  <Button 
-                    type="primary" 
-                    icon={<PlusOutlined />}
-                    onClick={() => {
-                      setEditingEntry(null);
-                      form.resetFields();
-                      setIsModalVisible(true);
-                    }}
-                  >
-                    Add Entry
-                  </Button>
-                  <Upload
-                    accept=".csv,.xlsx,.xls"
-                    showUploadList={false}
-                    beforeUpload={handleFileUpload}
-                  >
-                    <Button 
-                      icon={<UploadOutlined />}
-                      style={{ background: '#8b5cf6', color: 'white', borderColor: '#8b5cf6' }}
-                    >
-                      Upload CSV/Excel
-                    </Button>
-                  </Upload>
-            </Space>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditingEntry(null);
+                form.resetFields();
+                setIsModalVisible(true);
+              }}
+              size="large"
+            >
+              Add Entry
+            </Button>
+            <Upload
+              accept=".csv,.xlsx,.xls"
+              showUploadList={false}
+              beforeUpload={handleFileUpload}
+            >
+              <Button 
+                icon={<UploadOutlined />}
+                style={{ background: '#8b5cf6', color: 'white', borderColor: '#8b5cf6' }}
+                size="large"
+              >
+                Upload CSV/Excel
+              </Button>
+            </Upload>
           </div>
 
           {/* Bulk Operations */}
@@ -611,14 +653,9 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
             rowKey="id"
             loading={loading}
             rowSelection={rowSelection}
-            pagination={{
-              pageSize: 50,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) => 
-                `${range[0]}-${range[1]} of ${total} entries`,
-            }}
+            pagination={false}
             scroll={{ y: 600 }}
+            onScroll={handleTableScroll}
             style={{
               background: '#1a1a1a',
               borderRadius: '8px'

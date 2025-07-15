@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input, Button, Space, Typography, message, Select, Divider } from 'antd';
-import { SendOutlined, CopyOutlined, SwapOutlined, DeleteOutlined } from '@ant-design/icons';
+import { SendOutlined, CopyOutlined, SwapOutlined, DeleteOutlined, LoadingOutlined } from '@ant-design/icons';
 import apiClient from '../services/apiClient';
 
 const { TextArea } = Input;
@@ -46,6 +46,7 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
   const [isTranslating, setIsTranslating] = useState(false);
   const [exchanges, setExchanges] = useState<TranslationExchange[]>([]);
   const [glossaries, setGlossaries] = useState<any[]>([]);
+  const [isEmbeddingModelLoading, setIsEmbeddingModelLoading] = useState(false);
   const inputRef = useRef<any>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -87,14 +88,20 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
 
     setIsTranslating(true);
     
+    // Show embedding model loading for first translation with glossaries
+    if (selectedGlossaries.length > 0 && exchanges.length === 0) {
+      setIsEmbeddingModelLoading(true);
+    }
+    
     try {
       apiClient.setApiKey(apiKey);
+      // Extended timeout to 3 minutes (180 seconds)
       const response = await apiClient.translateSingle({
         text: inputText.trim(),
         source_lang: sourceLanguage,
         target_lang: targetLanguage,
         glossary_ids: selectedGlossaries
-      });
+      }, 180000);
 
       const newExchange: TranslationExchange = {
         id: `${Date.now()}`,
@@ -104,7 +111,12 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
         targetLanguage,
         timestamp: new Date(),
         tokensUsed: response.data.tokens_used,
-        glossaryInfo: response.data.glossary_info
+        glossaryInfo: {
+          used_glossaries: selectedGlossaries,
+          matches_found: response.data.glossaries_used || 0,
+          cascade_tier: response.data.search_strategy || (response.data.glossaries_used > 0 ? 'api_with_glossary' : 'ai_inference'),
+          confidence_score: response.data.confidence_score
+        }
       };
 
       setExchanges(prev => [...prev, newExchange]);
@@ -114,13 +126,14 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
       message.error(`Translation failed: ${error.message}`);
     } finally {
       setIsTranslating(false);
+      setIsEmbeddingModelLoading(false);
       inputRef.current?.focus();
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    // Ctrl+Enter or Cmd+Enter to submit multi-line text
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    // Enter to send, Shift+Enter for newline (like Claude)
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleTranslate();
     }
@@ -136,14 +149,7 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
   };
 
   const formatCascadeTier = (tier: string) => {
-    const tierMap: { [key: string]: string } = {
-      'exact_match': 'Tier 1: Exact Match',
-      'embedding_similarity': 'Tier 2: Embedding Similarity',
-      'fuzzy_match': 'Tier 3: Fuzzy Match', 
-      'dynamic_context': 'Tier 4: Dynamic Context',
-      'ai_inference': 'Tier 5: AI Inference'
-    };
-    return tierMap[tier] || tier;
+    return tier;
   };
 
   return (
@@ -197,15 +203,21 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
 
           <Select
             mode="multiple"
-            placeholder="Glossaries"
+            placeholder="Select glossaries..."
             value={selectedGlossaries}
             onChange={onSelectedGlossariesChange}
-            style={{ minWidth: 150 }}
-            size="small"
+            style={{ 
+              minWidth: 250, 
+              maxWidth: 400,
+              flex: 1
+            }}
+            size="middle"
+            maxTagCount="responsive"
+            showSearch
           >
             {glossaries.map(glossary => (
               <Option key={glossary.id} value={glossary.id}>
-                {glossary.name}
+                {glossary.name} ({glossary.entry_count} entries)
               </Option>
             ))}
           </Select>
@@ -229,7 +241,7 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
         padding: '24px',
         background: '#0a0a0a'
       }}>
-        {exchanges.length === 0 && (
+        {exchanges.length === 0 && !isEmbeddingModelLoading && (
           <div style={{ 
             textAlign: 'center', 
             color: '#666', 
@@ -237,6 +249,35 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
             fontSize: '16px'
           }}>
             Enter text to translate
+          </div>
+        )}
+
+        {/* Embedding Model Loading UI */}
+        {isEmbeddingModelLoading && (
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: '100px',
+            padding: '24px'
+          }}>
+            <div style={{ 
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '12px',
+              background: '#1a1a1a',
+              padding: '20px 32px',
+              borderRadius: '12px',
+              border: '1px solid #333'
+            }}>
+              <LoadingOutlined style={{ fontSize: '20px', color: '#8b5cf6' }} />
+              <div>
+                <div style={{ fontSize: '16px', color: '#e2e8f0', marginBottom: '4px' }}>
+                  Loading embedding model...
+                </div>
+                <div style={{ fontSize: '13px', color: '#888' }}>
+                  First-time load may take up to 3 minutes
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
