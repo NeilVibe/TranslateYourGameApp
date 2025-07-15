@@ -1,0 +1,85 @@
+/* Dark theme styles for Ant Design components */
+.dark-table .ant-table {
+  background: #2d3748 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-table .ant-table-thead > tr > th {
+  background: #1a202c !important;
+  color: #e2e8f0 !important;
+  border-bottom: 1px solid #4a5568 !important;
+}
+
+.dark-table .ant-table-tbody > tr > td {
+  background: #2d3748 !important;
+  color: #e2e8f0 !important;
+  border-bottom: 1px solid #4a5568 !important;
+}
+
+.dark-table .ant-table-tbody > tr:hover > td {
+  background: #4a5568 !important;
+}
+
+.dark-table .ant-table-pagination {
+  color: #e2e8f0 !important;
+}
+
+.dark-table .ant-pagination-item {
+  background: #4a5568 !important;
+  border-color: #4a5568 !important;
+}
+
+.dark-table .ant-pagination-item a {
+  color: #e2e8f0 !important;
+}
+
+.dark-table .ant-pagination-item-active {
+  background: #4299e1 !important;
+  border-color: #4299e1 !important;
+}
+
+.dark-table .ant-pagination-item-active a {
+  color: #1a202c !important;
+}
+
+.dark-table .ant-select-selector {
+  background: #4a5568 !important;
+  border-color: #4a5568 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark-table .ant-input {
+  background: #4a5568 !important;
+  border-color: #4a5568 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Modal dark theme */
+.ant-modal .ant-modal-content {
+  background: #2d3748 !important;
+}
+
+.ant-modal .ant-modal-header {
+  background: #2d3748 !important;
+  border-bottom: 1px solid #4a5568 !important;
+}
+
+.ant-modal .ant-modal-title {
+  color: #e2e8f0 !important;
+}
+
+.ant-modal .ant-form-item-label > label {
+  color: #e2e8f0 !important;
+}
+
+.ant-modal .ant-input,
+.ant-modal .ant-input:focus {
+  background: #4a5568 !important;
+  border-color: #4a5568 !important;
+  color: #e2e8f0 !important;
+}
+
+.ant-modal .ant-input:focus {
+  border-color: #4299e1 !important;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2) !important;
+}

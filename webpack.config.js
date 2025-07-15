@@ -2,7 +2,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  entry: './src/renderer/app.js',
+  entry: './src/renderer/index.tsx',
   target: 'electron-renderer',
   output: {
     path: path.resolve(__dirname, 'build'),
@@ -11,11 +11,33 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.(ts|tsx)$/,
+        use: {
+          loader: 'ts-loader',
+          options: {
+            configFile: 'tsconfig.renderer.json',
+            transpileOnly: true
+          }
+        },
+        exclude: /node_modules/,
+      },
+      {
+        test: /\.(js|jsx)$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'ts-loader',
+          options: {
+            configFile: 'tsconfig.renderer.json',
+            transpileOnly: true
+          }
+        },
+      },
+      {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
       },
       {
-        test: /\.(png|svg|jpg|jpeg|gif|ico)$/,
+        test: /\.(png|svg|jpg|jpeg|gif|ico|woff|woff2|eot|ttf)$/,
         type: 'asset/resource',
       },
     ],
@@ -28,6 +50,14 @@ module.exports = {
     }),
   ],
   resolve: {
-    extensions: ['.js'],
+    extensions: ['.tsx', '.ts', '.jsx', '.js'],
+    fallback: {
+      "path": require.resolve("path-browserify"),
+      "buffer": require.resolve("buffer"),
+      "process": require.resolve("process"),
+      "stream": require.resolve("stream-browserify"),
+      "util": require.resolve("util"),
+      "timers": require.resolve("timers-browserify")
+    }
   },
 };

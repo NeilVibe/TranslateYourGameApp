@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 
 module.exports = {
-  entry: './src/renderer/index-web.tsx',
+  entry: './src/renderer/index.tsx',
   mode: 'development',
   target: 'web', // Different from Electron version
   devtool: 'source-map',
