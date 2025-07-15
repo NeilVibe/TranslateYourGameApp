@@ -2,94 +2,11 @@ name: Build Desktop Apps
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*' ]
-
-permissions:
-  contents: write
-  releases: write
+    tags: ['v*']
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            platform: win
-          - os: macos-latest
-            platform: mac
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build application
-      run: npm run build
-
-    - name: Build Electron App
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        if [ "${{ matrix.platform }}" = "win" ]; then
-          npm run release:win
-        else
-          npm run release:mac
-        fi
-      shell: bash
-
-    - name: Upload Windows artifact
-      if: matrix.platform == 'win'
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-app
-        path: |
-          dist/*.exe
-          dist/*.yml
-
-    - name: Upload Mac artifact
-      if: matrix.platform == 'mac'
-      uses: actions/upload-artifact@v4
-      with:
-        name: mac-app
-        path: |
-          dist/*.zip
-          dist/*.yml
-
-  release:
-    needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: write
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          windows-app/*.exe
-          windows-app/*.yml
-          mac-app/*.zip
-          mac-app/*.yml
-        draft: false
-        prerelease: false
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Test
+      run: echo "Testing workflow"
