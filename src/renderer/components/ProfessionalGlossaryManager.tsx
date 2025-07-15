@@ -51,10 +51,9 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   const [inlineEditValue, setInlineEditValue] = useState<{source: string, target: string}>({source: '', target: ''});
   const [form] = Form.useForm();
   
-  // Advanced Search & Filter
+  // Enhanced Search & Filter
   const [searchText, setSearchText] = useState('');
-  const [sortBy, setSortBy] = useState<'name' | 'length' | 'created'>('length');
-  const [filterType, setFilterType] = useState<'all' | 'short' | 'medium' | 'long' | 'line'>('all');
+  const [searchMode, setSearchMode] = useState<'contains' | 'exact' | 'embedding'>('contains');
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   
   // Async upload state
@@ -121,54 +120,58 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     }
   };
 
-  // Smart filtering and sorting
+  // Enhanced search processing with embedding support
   const processedEntries = useMemo(() => {
     let filtered = entries.filter(entry => {
-      // Text search
-      const matchesSearch = searchText === '' || 
-        entry.source_text.toLowerCase().includes(searchText.toLowerCase()) ||
-        entry.target_text.toLowerCase().includes(searchText.toLowerCase());
+      if (searchText === '') return true;
       
-      // Type filter
-      const matchesType = (() => {
-        switch (filterType) {
-          case 'short': return entry.character_count! <= 20;
-          case 'medium': return entry.character_count! > 20 && entry.character_count! <= 100;
-          case 'long': return entry.character_count! > 100 && !entry.is_line_entry;
-          case 'line': return entry.is_line_entry;
-          default: return true;
-        }
-      })();
-
-      return matchesSearch && matchesType;
-    });
-
-    // Sort
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'length':
-          return a.character_count! - b.character_count!;
-        case 'name':
-          return a.source_text.localeCompare(b.source_text);
-        case 'created':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      const searchLower = searchText.toLowerCase();
+      const sourceLower = entry.source_text.toLowerCase();
+      const targetLower = entry.target_text.toLowerCase();
+      
+      switch (searchMode) {
+        case 'exact':
+          return sourceLower === searchLower || targetLower === searchLower;
+        case 'embedding':
+          // For embedding search, we'll use contains for now but mark it for API implementation
+          // TODO: Implement embedding search via embeddings API endpoint
+          return sourceLower.includes(searchLower) || targetLower.includes(searchLower);
+        case 'contains':
         default:
-          return 0;
+          return sourceLower.includes(searchLower) || targetLower.includes(searchLower);
       }
     });
 
+    // Simple alphabetical sorting
+    filtered.sort((a, b) => a.source_text.localeCompare(b.source_text));
     return filtered;
-  }, [entries, searchText, sortBy, filterType]);
+  }, [entries, searchText, searchMode]);
 
-  // Statistics
-  const stats = useMemo(() => {
-    const total = entries.length;
-    const short = entries.filter(e => e.character_count! <= 20).length;
-    const medium = entries.filter(e => e.character_count! > 20 && e.character_count! <= 100).length;
-    const long = entries.filter(e => e.character_count! > 100).length;
-    
-    return { total, short, medium, long };
-  }, [entries]);
+  // Embedding search function (future implementation)
+  const performEmbeddingSearch = async (query: string) => {
+    try {
+      // This would call the embedding search API endpoint
+      const response = await fetch(`${apiBaseUrl}/glossaries/${selectedGlossary?.id}/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          query: query,
+          search_type: 'embedding'
+        })
+      });
+      
+      if (response.ok) {
+        const results = await response.json();
+        return results;
+      }
+    } catch (error) {
+      console.error('Embedding search error:', error);
+    }
+    return null;
+  };
 
   // Inline editing handlers
   const startInlineEdit = (entry: GlossaryEntry) => {
@@ -501,80 +504,58 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
         Professional Glossary Management
       </Title>
       
-      {/* Glossary Selection */}
-      <Card style={{ background: '#1a1a1a', borderColor: '#333', marginBottom: '24px' }}>
-        <Title level={4} style={{ color: '#a0aec0', marginBottom: '16px' }}>Select Glossary:</Title>
-        <Space wrap>
+      {/* Compact Glossary Selector */}
+      <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        <Text style={{ color: '#a0aec0', fontSize: '14px', minWidth: '100px' }}>Select Glossary:</Text>
+        <Select
+          value={selectedGlossary?.id}
+          onChange={(id) => setSelectedGlossary(glossaries.find(g => g.id === id) || null)}
+          style={{ minWidth: '300px', flex: 1, maxWidth: '500px' }}
+          placeholder="Choose a glossary..."
+        >
           {glossaries.map((glossary) => (
-            <Button 
-              key={glossary.id}
-              type={selectedGlossary?.id === glossary.id ? 'primary' : 'default'}
-              onClick={() => setSelectedGlossary(glossary)}
-              style={{ marginBottom: '8px' }}
-            >
+            <Option key={glossary.id} value={glossary.id}>
               {glossary.name} ({glossary.entry_count} entries)
-            </Button>
+            </Option>
           ))}
-        </Space>
-      </Card>
+        </Select>
+        {selectedGlossary && (
+          <Text style={{ color: '#8b5cf6', fontSize: '14px', fontWeight: 'bold' }}>
+            Total: {entries.length} entries
+          </Text>
+        )}
+      </div>
 
       {selectedGlossary && (
         <>
-          {/* Statistics Dashboard */}
-          <Card style={{ background: '#1a1a1a', borderColor: '#333', marginBottom: '24px' }}>
-            <Row gutter={16}>
-              <Col span={6}>
-                <Statistic title="Total Entries" value={stats.total} valueStyle={{ color: '#e2e8f0' }} />
-              </Col>
-              <Col span={6}>
-                <Statistic title="Short (≤20)" value={stats.short} valueStyle={{ color: '#52c41a' }} />
-              </Col>
-              <Col span={6}>
-                <Statistic title="Medium (21-100)" value={stats.medium} valueStyle={{ color: '#fa8c16' }} />
-              </Col>
-              <Col span={6}>
-                <Statistic title="Long (>100)" value={stats.long} valueStyle={{ color: '#ff4d4f' }} />
-              </Col>
-            </Row>
-          </Card>
-
-          {/* Advanced Controls */}
-          <Card style={{ background: '#1a1a1a', borderColor: '#333', marginBottom: '16px' }}>
-            <Row gutter={16} align="middle">
-              <Col flex="auto">
-                <Title level={3} style={{ color: '#e2e8f0', margin: 0 }}>
-                  {selectedGlossary.name}
-                </Title>
-              </Col>
-              <Col>
-                <Space size="middle">
-                  <Search
-                    placeholder="Smart search..."
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    style={{ width: 200 }}
-                    allowClear
-                  />
-                  <Select
-                    value={sortBy}
-                    onChange={setSortBy}
-                    style={{ width: 120 }}
-                  >
-                    <Option value="length">By Length</Option>
-                    <Option value="name">By Name</Option>
-                    <Option value="created">By Date</Option>
-                  </Select>
-                  <Select
-                    value={filterType}
-                    onChange={setFilterType}
-                    style={{ width: 100 }}
-                  >
-                    <Option value="all">All</Option>
-                    <Option value="short">Short</Option>
-                    <Option value="medium">Medium</Option>
-                    <Option value="long">Long</Option>
-                    <Option value="line">Lines</Option>
-                  </Select>
+          {/* Clean Search Bar */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px', 
+            marginBottom: '16px',
+            flexWrap: 'wrap'
+          }}>
+            <Input
+              placeholder="Search glossary entries..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ minWidth: '300px', flex: 1, maxWidth: '500px' }}
+              allowClear
+              size="large"
+              prefix={<SearchOutlined />}
+            />
+            <Select
+              value={searchMode}
+              onChange={setSearchMode}
+              style={{ width: 140 }}
+              size="large"
+            >
+              <Option value="contains">Contains</Option>
+              <Option value="exact">Exact Match</Option>
+              <Option value="embedding">AI Search</Option>
+            </Select>
+            <Space size="middle">
                   <Button 
                     type="primary" 
                     icon={<PlusOutlined />}
@@ -598,32 +579,30 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
                       Upload CSV/Excel
                     </Button>
                   </Upload>
-                </Space>
-              </Col>
-            </Row>
+            </Space>
+          </div>
 
-            {/* Bulk Operations */}
-            {selectedRowKeys.length > 0 && (
-              <div style={{ marginTop: '16px', padding: '12px', background: '#2d3748', borderRadius: '6px' }}>
-                <Space>
-                  <Text style={{ color: '#e2e8f0' }}>
-                    {selectedRowKeys.length} entries selected
-                  </Text>
-                  <Popconfirm
-                    title={`Delete ${selectedRowKeys.length} selected entries?`}
-                    onConfirm={handleBulkDelete}
-                  >
-                    <Button danger size="small" icon={<DeleteOutlined />}>
-                      Bulk Delete
-                    </Button>
-                  </Popconfirm>
-                  <Button size="small" onClick={() => setSelectedRowKeys([])}>
-                    Clear Selection
+          {/* Bulk Operations */}
+          {selectedRowKeys.length > 0 && (
+            <div style={{ marginBottom: '16px', padding: '12px', background: '#2d3748', borderRadius: '6px' }}>
+              <Space>
+                <Text style={{ color: '#e2e8f0' }}>
+                  {selectedRowKeys.length} entries selected
+                </Text>
+                <Popconfirm
+                  title={`Delete ${selectedRowKeys.length} selected entries?`}
+                  onConfirm={handleBulkDelete}
+                >
+                  <Button danger size="small" icon={<DeleteOutlined />}>
+                    Bulk Delete
                   </Button>
-                </Space>
-              </div>
-            )}
-          </Card>
+                </Popconfirm>
+                <Button size="small" onClick={() => setSelectedRowKeys([])}>
+                  Clear Selection
+                </Button>
+              </Space>
+            </div>
+          )}
 
           {/* Professional Data Table */}
           <Table
