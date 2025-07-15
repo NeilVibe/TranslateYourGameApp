@@ -197,32 +197,15 @@ ipcMain.handle('app:screenshot', async () => {
 });
 
 // API key storage (secure storage in production)
+// Import secure config
+const secureConfig = require('./secureConfig');
+
 ipcMain.handle('storage:getApiKey', async () => {
-  const configPath = path.join(app.getPath('userData'), 'config.json');
-  try {
-    if (fs.existsSync(configPath)) {
-      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      return config.apiKey || null;
-    }
-  } catch (error) {
-    console.error('Error reading API key:', error);
-  }
-  return null;
+  return secureConfig.getApiKey();
 });
 
 ipcMain.handle('storage:setApiKey', async (event, apiKey) => {
-  const configPath = path.join(app.getPath('userData'), 'config.json');
-  try {
-    const config = fs.existsSync(configPath) 
-      ? JSON.parse(fs.readFileSync(configPath, 'utf8'))
-      : {};
-    config.apiKey = apiKey;
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-    return true;
-  } catch (error) {
-    console.error('Error saving API key:', error);
-    return false;
-  }
+  return secureConfig.setApiKey(apiKey);
 });
 
 // Open external links

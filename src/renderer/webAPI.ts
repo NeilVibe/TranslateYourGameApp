@@ -57,10 +57,9 @@ export const webAPI = {
   },
 
   getApiKey: (): Promise<string | null> => {
-    // Auto-inject admin API key for desktop app and localhost development
-    const adminApiKey = 'tk_live_7IezEZ3-pLTSnFsiW7kOkfXIIKWOEhZp9r1H-TWv';
-    localStorage.setItem('apiKey', adminApiKey);
-    return Promise.resolve(adminApiKey);
+    // Get API key from localStorage
+    const apiKey = localStorage.getItem('apiKey');
+    return Promise.resolve(apiKey);
   },
 
   setApiKey: (apiKey: string): Promise<boolean> => {

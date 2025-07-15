@@ -6,7 +6,7 @@ import './styles.css';
 
 // API Configuration
 const API_BASE_URL = 'http://localhost:5002/api/v1';
-let API_KEY = localStorage.getItem('apiKey') || 'tk_live_7IezEZ3-pLTSnFsiW7kOkfXIIKWOEhZp9r1H-TWv';
+let API_KEY = localStorage.getItem('apiKey') || null;
 
 // Global State
 let currentFile = null;
@@ -369,6 +369,15 @@ async function checkAPIStatus() {
     statusEl.textContent = 'Checking...';
     statusEl.style.color = '#a0aec0';
     
+    // Check if API key is configured
+    if (!API_KEY) {
+        statusEl.textContent = '⚠️ No API key configured';
+        statusEl.style.color = '#ed8936';
+        // Prompt user to enter API key
+        promptForApiKey();
+        return;
+    }
+    
     try {
         const response = await fetch(`${API_BASE_URL}/health`, {
             headers: { 'X-API-Key': API_KEY }
@@ -454,7 +463,12 @@ async function loadGlossaries() {
         // Show error in UI
         const listEl = document.getElementById('glossary-list');
         if (listEl) {
-            listEl.innerHTML = '<div class="glossary-loading" style="color: #f56565;">Failed to load glossaries. Check API connection.</div>';
+            listEl.textContent = '';
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'glossary-loading';
+            errorDiv.style.color = '#f56565';
+            errorDiv.textContent = 'Failed to load glossaries. Check API connection.';
+            listEl.appendChild(errorDiv);
         }
     }
 }
@@ -471,18 +485,39 @@ function updateGlossaryList() {
     
     if (availableGlossaries.length === 0) {
         console.log('📝 No glossaries found, showing empty message');
-        listEl.innerHTML = '<div class="glossary-loading">No glossaries found. Create your first glossary!</div>';
+        listEl.textContent = '';
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'glossary-loading';
+        emptyDiv.textContent = 'No glossaries found. Create your first glossary!';
+        listEl.appendChild(emptyDiv);
         return;
     }
     
     console.log('📋 Rendering', availableGlossaries.length, 'glossaries');
-    listEl.innerHTML = availableGlossaries.map(glossary => `
-        <div class="glossary-item" data-glossary-id="${glossary.id}">
-            <h4>${glossary.name}</h4>
-            <p>${glossary.entry_count || 0} entries</p>
-            <p>Created: ${new Date(glossary.created_at).toLocaleDateString()}</p>
-        </div>
-    `).join('');
+    // Clear existing content
+    listEl.textContent = '';
+    
+    // Create glossary items safely
+    availableGlossaries.forEach(glossary => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'glossary-item';
+        itemDiv.setAttribute('data-glossary-id', glossary.id);
+        
+        const nameEl = document.createElement('h4');
+        nameEl.textContent = glossary.name;
+        
+        const entriesEl = document.createElement('p');
+        entriesEl.textContent = `${glossary.entry_count || 0} entries`;
+        
+        const createdEl = document.createElement('p');
+        createdEl.textContent = `Created: ${new Date(glossary.created_at).toLocaleDateString()}`;
+        
+        itemDiv.appendChild(nameEl);
+        itemDiv.appendChild(entriesEl);
+        itemDiv.appendChild(createdEl);
+        
+        listEl.appendChild(itemDiv);
+    });
     
     // Add event delegation for glossary items
     listEl.addEventListener('click', (e) => {
@@ -502,16 +537,33 @@ function updateGlossarySelector() {
     const selectorEl = document.getElementById('glossary-selector');
     
     if (availableGlossaries.length === 0) {
-        selectorEl.innerHTML = '<div class="glossary-loading">No glossaries available</div>';
+        selectorEl.textContent = '';
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'glossary-loading';
+        emptyDiv.textContent = 'No glossaries available';
+        selectorEl.appendChild(emptyDiv);
         return;
     }
     
-    selectorEl.innerHTML = availableGlossaries.map(glossary => `
-        <label class="glossary-checkbox">
-            <input type="checkbox" value="${glossary.id}">
-            <span>${glossary.name} (${glossary.entry_count || 0} entries)</span>
-        </label>
-    `).join('');
+    // Clear existing content
+    selectorEl.textContent = '';
+    
+    // Create checkbox elements safely
+    availableGlossaries.forEach(glossary => {
+        const label = document.createElement('label');
+        label.className = 'glossary-checkbox';
+        
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = glossary.id;
+        
+        const span = document.createElement('span');
+        span.textContent = `${glossary.name} (${glossary.entry_count || 0} entries)`;
+        
+        label.appendChild(input);
+        label.appendChild(span);
+        selectorEl.appendChild(label);
+    });
 }
 
 // View glossary details
@@ -555,13 +607,28 @@ window.viewGlossary = async function(glossaryId) {
         
         // Display entries
         const entriesEl = document.getElementById('glossary-entries');
-        entriesEl.innerHTML = entries.map(entry => `
-            <div class="glossary-entry">
-                <span>${entry.source_text}</span>
-                <span>→</span>
-                <span>${entry.target_text}</span>
-            </div>
-        `).join('');
+        entriesEl.textContent = '';
+        
+        // Create entry elements safely
+        entries.forEach(entry => {
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'glossary-entry';
+            
+            const sourceSpan = document.createElement('span');
+            sourceSpan.textContent = entry.source_text;
+            
+            const arrowSpan = document.createElement('span');
+            arrowSpan.textContent = '→';
+            
+            const targetSpan = document.createElement('span');
+            targetSpan.textContent = entry.target_text;
+            
+            entryDiv.appendChild(sourceSpan);
+            entryDiv.appendChild(arrowSpan);
+            entryDiv.appendChild(targetSpan);
+            
+            entriesEl.appendChild(entryDiv);
+        });
         
     } catch (error) {
         console.error('Error loading glossary:', error);
@@ -734,11 +801,15 @@ function addChatMessage(type, text) {
     
     const messageEl = document.createElement('div');
     messageEl.className = `chat-message ${type}`;
-    messageEl.innerHTML = `
-        <div class="message-content">
-            ${type === 'user' ? '👤' : type === 'assistant' ? '🤖' : '⚠️'} ${text}
-        </div>
-    `;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    
+    // Set icon based on type
+    const icon = type === 'user' ? '👤' : type === 'assistant' ? '🤖' : '⚠️';
+    contentDiv.textContent = `${icon} ${text}`;
+    
+    messageEl.appendChild(contentDiv);
     
     messagesEl.appendChild(messageEl);
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -768,6 +839,136 @@ function showNotification(type, message) {
         notification.style.opacity = '0';
         setTimeout(() => notification.remove(), 300);
     }, 3000);
+}
+
+// Prompt for API key
+function promptForApiKey() {
+    // Create modal for API key input
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    modalContent.style.cssText = `
+        background: #1a202c;
+        padding: 32px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        max-width: 500px;
+        width: 90%;
+    `;
+    
+    // Create title
+    const title = document.createElement('h2');
+    title.style.cssText = 'color: #e2e8f0; margin-bottom: 16px;';
+    title.textContent = 'API Key Required';
+    
+    // Create description
+    const desc = document.createElement('p');
+    desc.style.cssText = 'color: #a0aec0; margin-bottom: 24px;';
+    desc.textContent = 'Please enter your Translate Your Game API key to continue.';
+    
+    // Create input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'api-key-input';
+    input.placeholder = 'tk_live_...';
+    input.style.cssText = `
+        width: 100%;
+        padding: 12px 16px;
+        background: #2d3748;
+        border: 1px solid #4a5568;
+        border-radius: 8px;
+        color: #e2e8f0;
+        font-size: 14px;
+        margin-bottom: 16px;
+    `;
+    
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = 'display: flex; gap: 12px; justify-content: flex-end;';
+    
+    // Create cancel button
+    const cancelBtn = document.createElement('button');
+    cancelBtn.id = 'api-key-cancel';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.cssText = `
+        padding: 8px 16px;
+        background: #4a5568;
+        color: #e2e8f0;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    `;
+    
+    // Create save button
+    const saveBtn = document.createElement('button');
+    saveBtn.id = 'api-key-save';
+    saveBtn.textContent = 'Save';
+    saveBtn.style.cssText = `
+        padding: 8px 16px;
+        background: #4299e1;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    `;
+    
+    // Assemble modal content
+    buttonContainer.appendChild(cancelBtn);
+    buttonContainer.appendChild(saveBtn);
+    modalContent.appendChild(title);
+    modalContent.appendChild(desc);
+    modalContent.appendChild(input);
+    modalContent.appendChild(buttonContainer);
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Focus input
+    input.focus();
+    
+    // Handle save
+    saveBtn.addEventListener('click', async () => {
+        const apiKey = input.value.trim();
+        if (apiKey) {
+            API_KEY = apiKey;
+            localStorage.setItem('apiKey', apiKey);
+            
+            // If in Electron, also save to secure storage
+            if (window.electronAPI) {
+                await window.electronAPI.setApiKey(apiKey);
+            }
+            
+            modal.remove();
+            checkAPIStatus();
+            loadGlossaries();
+        }
+    });
+    
+    // Handle cancel
+    cancelBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    // Handle enter key
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            saveBtn.click();
+        }
+    });
 }
 
 // Initialize Electron API bridge

@@ -47,11 +47,13 @@ const GlossarySelector: React.FC<GlossarySelectorProps> = ({
   const loadData = async () => {
     setLoading(true);
     try {
-      // Use demo API key for localhost development if no apiKey provided
-      if (!apiKey && window.location.hostname === 'localhost') {
-        apiClient.setApiKey('tk_live_7IezEZ3-pLTSnFsiW7kOkfXIIKWOEhZp9r1H-TWv');
-      } else if (apiKey) {
+      // Set API key if provided
+      if (apiKey) {
         apiClient.setApiKey(apiKey);
+      } else {
+        // No API key available
+        setLoading(false);
+        return;
       }
       
       const [glossariesRes, languagesRes] = await Promise.all([
