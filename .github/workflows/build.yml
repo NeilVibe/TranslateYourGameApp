@@ -76,14 +76,47 @@ jobs:
         echo ""
         if [ "${{ matrix.platform }}" = "win" ]; then
           echo "Building for Windows..."
-          npm run release:win
+          npm run build:win
         else
           echo "Building for Mac..."
-          npm run release:mac
+          npm run build:mac
         fi
         echo ""
         echo "=== Build completed, checking dist directory ==="
         ls -la dist/ || echo "ERROR: No dist directory created"
+        echo ""
+        echo "=== Generating update files ==="
+        if [ "${{ matrix.platform }}" = "win" ]; then
+          echo "Generating latest.yml for Windows..."
+          VERSION=$(node -p "require('./package.json').version")
+          EXE_FILE="Translate.Your.Game.Setup.${VERSION}.exe"
+          cat > dist/latest.yml << EOF
+version: ${VERSION}
+files:
+  - url: ${EXE_FILE}
+    sha512: $(shasum -a 512 "dist/${EXE_FILE}" | cut -d' ' -f1)
+    size: $(stat -c%s "dist/${EXE_FILE}")
+path: ${EXE_FILE}
+releaseDate: $(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")
+EOF
+        else
+          echo "Generating latest-mac.yml for Mac..."
+          VERSION=$(node -p "require('./package.json').version")
+          ZIP_FILE="Translate.Your.Game-${VERSION}-mac.zip"
+          ARM_FILE="Translate.Your.Game-${VERSION}-arm64-mac.zip"
+          cat > dist/latest-mac.yml << EOF
+version: ${VERSION}
+files:
+  - url: ${ZIP_FILE}
+    sha512: $(shasum -a 512 "dist/${ZIP_FILE}" | cut -d' ' -f1)
+    size: $(stat -c%s "dist/${ZIP_FILE}")
+  - url: ${ARM_FILE}
+    sha512: $(shasum -a 512 "dist/${ARM_FILE}" | cut -d' ' -f1)
+    size: $(stat -c%s "dist/${ARM_FILE}")
+path: ${ZIP_FILE}
+releaseDate: $(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")
+EOF
+        fi
       shell: bash
 
     - name: Upload Windows artifact
