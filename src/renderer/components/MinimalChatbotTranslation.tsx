@@ -119,7 +119,8 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Ctrl+Enter or Cmd+Enter to submit multi-line text
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleTranslate();
     }
@@ -253,7 +254,7 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
                 <div style={{ fontSize: '14px', color: '#888', marginBottom: '8px' }}>
                   {sourceLanguage.toUpperCase()}
                 </div>
-                <div style={{ fontSize: '16px', lineHeight: '1.5' }}>
+                <div style={{ fontSize: '16px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
                   {exchange.input}
                 </div>
               </div>
@@ -283,7 +284,7 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
                     onClick={() => copyToClipboard(exchange.output)}
                   />
                 </div>
-                <div style={{ fontSize: '16px', lineHeight: '1.5' }}>
+                <div style={{ fontSize: '16px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
                   {exchange.output}
                 </div>
               </div>
