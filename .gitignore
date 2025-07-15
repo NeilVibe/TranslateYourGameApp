@@ -27,4 +27,4 @@ build/
 Thumbs.db
 
 # Electron
-out/
+out/src/renderer/components/archive/

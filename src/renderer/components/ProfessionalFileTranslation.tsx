@@ -8,14 +8,29 @@ import {
   Divider, 
   Input,
   Select,
-  notification
+  notification,
+  Card,
+  Badge,
+  Segmented,
+  Empty,
+  Row,
+  Col
 } from 'antd';
 import { 
   FileTextOutlined, 
   CloudUploadOutlined, 
   DownloadOutlined,
   ThunderboltOutlined,
-  RocketOutlined
+  RocketOutlined,
+  SearchOutlined,
+  EditOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+  SaveOutlined,
+  GlobalOutlined,
+  BookOutlined,
+  ClockCircleOutlined,
+  SyncOutlined
 } from '@ant-design/icons';
 import apiClient, { TaskResponse } from '../services/apiClient';
 import LanguageSelector from './LanguageSelector';
