@@ -2,10 +2,8 @@ name: Build Desktop Apps
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
     tags: [ 'v*' ]
-  pull_request:
-    branches: [ main, master ]
 
 permissions:
   contents: write
@@ -14,7 +12,6 @@ permissions:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    
     strategy:
       fail-fast: false
       matrix:
@@ -38,58 +35,17 @@ jobs:
       run: npm ci
 
     - name: Build application
-      run: |
-        echo "=== Environment Check ==="
-        node --version
-        npm --version
-        npx tsc --version
-        echo ""
-        echo "=== Building ==="
-        npm run build
-
-    - name: Verify build files
-      run: |
-        echo "=== Checking build output ==="
-        echo "Current directory: $(pwd)"
-        echo ""
-        echo "=== Build directory contents ==="
-        ls -la build/ || echo "ERROR: No build directory found"
-        echo ""
-        echo "=== Main entry point ==="
-        ls -la build/main.js || echo "ERROR: No main.js found"
-        echo ""
-        echo "=== Preload directory ==="
-        ls -la build/preload/ || echo "ERROR: No preload directory found"
-        echo ""
-        echo "=== Renderer files ==="
-        ls -la build/renderer.js || echo "ERROR: No renderer.js found"
-        ls -la build/index.html || echo "ERROR: No index.html found"
-        echo ""
-        echo "=== Package.json main field ==="
-        grep '"main"' package.json || echo "ERROR: No main field in package.json"
-        echo ""
-        echo "=== Assets directory ==="
-        ls -la assets/ || echo "ERROR: No assets directory found"
-      shell: bash
+      run: npm run build
 
     - name: Build Electron App
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo "=== Starting Electron Builder ==="
-        echo "Platform: ${{ matrix.platform }}"
-        echo "OS: ${{ matrix.os }}"
-        echo ""
         if [ "${{ matrix.platform }}" = "win" ]; then
-          echo "Building for Windows..."
           npm run release:win
         else
-          echo "Building for Mac..."
           npm run release:mac
         fi
-        echo ""
-        echo "=== Build completed, checking dist directory ==="
-        ls -la dist/ || echo "ERROR: No dist directory created"
       shell: bash
 
     - name: Upload Windows artifact
@@ -100,7 +56,6 @@ jobs:
         path: |
           dist/*.exe
           dist/*.yml
-          dist/win-unpacked/
 
     - name: Upload Mac artifact
       if: matrix.platform == 'mac'
@@ -110,9 +65,6 @@ jobs:
         path: |
           dist/*.zip
           dist/*.yml
-          dist/mac/
-          dist/mac-arm64/
-
 
   release:
     needs: build
