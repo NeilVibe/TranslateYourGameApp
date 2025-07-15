@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Table, Button, Modal, Form, Input, Space, Typography, message, 
   Popconfirm, Select, Checkbox, Tag, Tooltip, Progress, Card,
-  Divider, Row, Col, Statistic
+  Divider, Row, Col, Statistic, Upload
 } from 'antd';
 import { 
   PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, 
@@ -56,6 +56,12 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   const [sortBy, setSortBy] = useState<'name' | 'length' | 'created'>('length');
   const [filterType, setFilterType] = useState<'all' | 'short' | 'medium' | 'long' | 'line'>('all');
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
+  
+  // Async upload state
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [uploadTaskId, setUploadTaskId] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Load data
   useEffect(() => {
@@ -232,6 +238,103 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   };
 
   // Individual CRUD operations
+  const handleFileUpload = async (file: File) => {
+    if (!selectedGlossary) return false;
+    
+    setIsUploading(true);
+    setUploadModalVisible(true);
+    setUploadProgress({
+      progress: 0,
+      current_phase: 'Uploading file...',
+      items_completed: 0,
+      total_items: 0
+    });
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch(`${apiBaseUrl}/glossaries/${selectedGlossary.id}/upload-async`, {
+        method: 'POST',
+        headers: {
+          'X-API-Key': apiKey
+        },
+        body: formData
+      });
+      
+      if (!response.ok) throw new Error('Upload failed');
+      
+      const data = await response.json();
+      if (data.status === 'success') {
+        setUploadTaskId(data.data.task_id);
+        
+        // Start polling for progress
+        pollUploadProgress(data.data.task_id);
+      } else {
+        throw new Error(data.message || 'Upload failed');
+      }
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      message.error('Failed to start upload');
+      setIsUploading(false);
+      setUploadModalVisible(false);
+    }
+    
+    return false; // Prevent default upload behavior
+  };
+  
+  const pollUploadProgress = async (taskId: string) => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/tasks/${taskId}`, {
+        headers: { 'X-API-Key': apiKey }
+      });
+      
+      if (!response.ok) throw new Error('Failed to get task status');
+      
+      const data = await response.json();
+      const task = data.data;
+      
+      setUploadProgress({
+        progress: task.progress || 0,
+        current_phase: task.current_phase || 'Processing...',
+        items_completed: task.items_completed || 0,
+        total_items: task.items_total || 0,
+        status: task.status
+      });
+      
+      if (task.status === 'completed') {
+        message.success('Glossary uploaded successfully!');
+        setIsUploading(false);
+        setUploadTaskId(null);
+        
+        // Reload entries
+        loadGlossaryEntries(selectedGlossary!.id);
+        
+        // Update glossary count
+        loadGlossaries();
+        
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          setUploadModalVisible(false);
+          setUploadProgress(null);
+        }, 2000);
+        
+      } else if (task.status === 'failed') {
+        throw new Error(task.error_message || 'Upload failed');
+      } else {
+        // Continue polling
+        setTimeout(() => pollUploadProgress(taskId), 1000);
+      }
+      
+    } catch (error) {
+      console.error('Poll error:', error);
+      message.error('Upload failed');
+      setIsUploading(false);
+      setUploadModalVisible(false);
+    }
+  };
+
   const handleDeleteEntry = async (entryId: number) => {
     try {
       const response = await fetch(`${apiBaseUrl}/glossaries/${selectedGlossary?.id}/entries/${entryId}`, {
@@ -483,6 +586,18 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
                   >
                     Add Entry
                   </Button>
+                  <Upload
+                    accept=".csv,.xlsx,.xls"
+                    showUploadList={false}
+                    beforeUpload={handleFileUpload}
+                  >
+                    <Button 
+                      icon={<UploadOutlined />}
+                      style={{ background: '#8b5cf6', color: 'white', borderColor: '#8b5cf6' }}
+                    >
+                      Upload CSV/Excel
+                    </Button>
+                  </Upload>
                 </Space>
               </Col>
             </Row>
@@ -601,6 +716,56 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
           background: #3d4852 !important;
         }
       `}</style>
+      
+      {/* Upload Progress Modal */}
+      <Modal
+        title="Uploading Glossary"
+        open={uploadModalVisible}
+        footer={null}
+        closable={!isUploading}
+        onCancel={() => {
+          if (!isUploading) {
+            setUploadModalVisible(false);
+            setUploadProgress(null);
+          }
+        }}
+      >
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          {uploadProgress && (
+            <>
+              <Progress
+                percent={uploadProgress.progress || 0}
+                status={uploadProgress.status === 'failed' ? 'exception' : 'active'}
+                strokeColor={{
+                  '0%': '#8b5cf6',
+                  '100%': '#764ba2'
+                }}
+              />
+              
+              <div style={{ marginTop: '20px' }}>
+                <Text strong style={{ fontSize: '16px', display: 'block', marginBottom: '8px' }}>
+                  {uploadProgress.current_phase}
+                </Text>
+                
+                {uploadProgress.total_items > 0 && (
+                  <Text type="secondary">
+                    Processed {uploadProgress.items_completed} of {uploadProgress.total_items} entries
+                  </Text>
+                )}
+              </div>
+              
+              {uploadProgress.status === 'completed' && (
+                <div style={{ marginTop: '20px' }}>
+                  <CheckOutlined style={{ fontSize: '48px', color: '#52c41a' }} />
+                  <Text strong style={{ display: 'block', marginTop: '10px', color: '#52c41a' }}>
+                    Upload Complete!
+                  </Text>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };
