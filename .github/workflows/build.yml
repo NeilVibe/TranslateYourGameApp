@@ -47,7 +47,7 @@ jobs:
         name: windows-app
         path: |
           dist/*.exe
-          dist/*.yml
+          dist/latest.yml
 
     - uses: actions/upload-artifact@v4
       if: matrix.platform == 'mac'  
@@ -55,7 +55,7 @@ jobs:
         name: mac-app
         path: |
           dist/*.zip
-          dist/*.yml
+          dist/latest-mac.yml
 
   release:
     needs: build
