@@ -4,9 +4,70 @@ on:
   push:
     tags: ['v*']
 
+permissions:
+  contents: write
+
 jobs:
   build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+          - os: macos-latest
+            platform: mac
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - run: npm ci
+    
+    - run: npm run build
+
+    - name: Build Electron App
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if [ "${{ matrix.platform }}" = "win" ]; then
+          npm run release:win
+        else
+          npm run release:mac
+        fi
+      shell: bash
+
+    - uses: actions/upload-artifact@v4
+      if: matrix.platform == 'win'
+      with:
+        name: windows-app
+        path: |
+          dist/*.exe
+          dist/*.yml
+
+    - uses: actions/upload-artifact@v4
+      if: matrix.platform == 'mac'  
+      with:
+        name: mac-app
+        path: |
+          dist/*.zip
+          dist/*.yml
+
+  release:
+    needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Test
-      run: echo "Testing workflow"
+    - uses: actions/download-artifact@v4
+    
+    - uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          windows-app/*
+          mac-app/*
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
