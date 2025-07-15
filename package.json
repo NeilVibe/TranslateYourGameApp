@@ -16,6 +16,8 @@
     "release:win": "npm run build && electron-builder --win --publish=always",
     "release:mac": "npm run build && electron-builder --mac --publish=always",
     "release:all": "npm run build && electron-builder -mwl --publish=always",
+    "ci:win": "npm run build && electron-builder --win --publish=never",
+    "ci:mac": "npm run build && electron-builder --mac --publish=never",
     "dev": "concurrently \"npm run build:main\" \"npm run build:preload\" \"webpack --mode development --watch\"",
     "dev:electron": "npm run build:main && npm run build:preload && electron .",
     "dev:web": "webpack serve --config webpack.dev.config.js"
