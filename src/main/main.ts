@@ -41,7 +41,7 @@ function createWindow() {
   mainWindow.setMenu(null);
   
   // Load the built React app (standalone)
-  mainWindow.loadFile(path.join(__dirname, '../index.html'));
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
   
   // Only open dev tools in development
   if (process.env.NODE_ENV === 'development') {
@@ -51,6 +51,16 @@ function createWindow() {
   // Error handling
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
     console.error('Failed to load:', errorCode, errorDescription);
+  });
+
+  // Console message handling
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    console.log(`Console [${level}]: ${message}`);
+  });
+
+  // Crashed handling
+  mainWindow.webContents.on('render-process-gone', (event, details) => {
+    console.error('Renderer process crashed:', details);
   });
 
   mainWindow.on('closed', () => {

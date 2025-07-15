@@ -26,6 +26,8 @@ interface AppState {
 }
 
 function App() {
+  console.log('App component rendering...');
+  
   const [state, setState] = useState<AppState>({
     apiKey: null,
     isProcessing: false,
@@ -43,6 +45,7 @@ function App() {
 
   // Load API key on startup
   useEffect(() => {
+    console.log('App useEffect running...');
     loadApiKey();
   }, []);
 

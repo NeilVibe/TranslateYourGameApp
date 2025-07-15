@@ -1,9 +1,10 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
   entry: './src/renderer/index.tsx',
-  target: 'electron-renderer',
+  target: 'web', // Changed from 'electron-renderer' to 'web'
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: 'renderer.js',
@@ -46,7 +47,10 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './src/renderer/index.html',
       filename: 'index.html',
-      inject: false, // We'll manually add script tag
+      inject: 'body', // Let webpack inject the script properly
+    }),
+    new webpack.ProvidePlugin({
+      process: 'process/browser.js',
     }),
   ],
   resolve: {
@@ -54,7 +58,7 @@ module.exports = {
     fallback: {
       "path": require.resolve("path-browserify"),
       "buffer": require.resolve("buffer"),
-      "process": require.resolve("process"),
+      "process": require.resolve("process/browser.js"),
       "stream": require.resolve("stream-browserify"),
       "util": require.resolve("util"),
       "timers": require.resolve("timers-browserify")
