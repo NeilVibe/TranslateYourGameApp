@@ -71,8 +71,15 @@ function setupAutoUpdater() {
   
   autoUpdater.on('update-available', (info) => {
     console.log('Update available:', info.version);
-    // Send to renderer process
+    // Show dialog to user
     if (mainWindow) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Update Available',
+        message: `Version ${info.version} is available`,
+        detail: 'The update will download in the background.',
+        buttons: ['OK']
+      });
       mainWindow.webContents.send('update-available', info);
     }
   });
@@ -103,8 +110,20 @@ function setupAutoUpdater() {
   
   autoUpdater.on('update-downloaded', (info) => {
     console.log('Update downloaded:', info.version);
-    // Send to renderer process
+    // Show restart dialog
     if (mainWindow) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Update Ready',
+        message: `Version ${info.version} has been downloaded`,
+        detail: 'The application will restart to apply the update.',
+        buttons: ['Restart Now', 'Later'],
+        defaultId: 0
+      }).then((result) => {
+        if (result.response === 0) {
+          autoUpdater.quitAndInstall();
+        }
+      });
       mainWindow.webContents.send('update-downloaded', info);
     }
   });
