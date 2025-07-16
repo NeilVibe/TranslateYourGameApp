@@ -1,6 +1,6 @@
 {
   "name": "translate-your-game-desktop",
-  "version": "1.0.27",
+  "version": "1.0.26",
   "description": "Professional game localization desktop app",
   "main": "build/main.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "build:all": "npm run build && electron-builder -mwl --publish=never",
     "release:win": "npm run build && electron-builder --win --publish=always",
     "release:mac": "npm run build && electron-builder --mac --publish=always",
-    "release:linux": "npm run build && electron-builder --linux --publish=never",
+    "release:linux": "npm run build && electron-builder --linux --publish=always",
     "release:all": "npm run build && electron-builder -mwl --publish=always",
     "ci:win": "npm run build && electron-builder --win --publish=never",
     "ci:mac": "npm run build && electron-builder --mac --publish=never",
