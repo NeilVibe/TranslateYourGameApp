@@ -30,7 +30,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleGetApiKey = () => {
-    window.electronAPI.openExternal('https://translateyourgame.com/profile/api-keys');
+    window.electronAPI.openExternal('https://translateyourgame.com/my-profile');
   };
 
   return (
