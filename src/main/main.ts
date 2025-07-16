@@ -143,7 +143,7 @@ function createUpdateProgressWindow() {
 // Auto-updater configuration - AGGRESSIVE FORCE UPDATE
 function setupAutoUpdater() {
   // Configure auto-updater for aggressive updates
-  autoUpdater.autoDownload = false; // We control download manually
+  autoUpdater.autoDownload = true; // Enable automatic downloads
   autoUpdater.autoInstallOnAppQuit = false; // We force restart manually
   
   // Auto-updater event handlers
