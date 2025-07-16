@@ -68,11 +68,83 @@ function createWindow() {
   });
 }
 
-// Auto-updater configuration
+// Global update progress window
+let updateProgressWindow: BrowserWindow | null = null;
+
+function createUpdateProgressWindow() {
+  updateProgressWindow = new BrowserWindow({
+    width: 400,
+    height: 200,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    closable: false,
+    alwaysOnTop: true,
+    center: true,
+    frame: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  // Create a simple HTML page for update progress
+  const updateHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          margin: 0;
+          padding: 20px;
+          background: #1a1a1a;
+          color: #fff;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          height: 160px;
+        }
+        .title { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+        .message { font-size: 14px; margin-bottom: 20px; color: #ccc; }
+        .progress-container {
+          width: 300px;
+          height: 8px;
+          background: #333;
+          border-radius: 4px;
+          overflow: hidden;
+          margin-bottom: 10px;
+        }
+        .progress-bar {
+          height: 100%;
+          background: linear-gradient(90deg, #8b5cf6, #a855f7);
+          transition: width 0.3s ease;
+          width: 0%;
+        }
+        .progress-text { font-size: 12px; color: #888; }
+      </style>
+    </head>
+    <body>
+      <div class="title">Updating Translate Your Game</div>
+      <div class="message">Downloading update...</div>
+      <div class="progress-container">
+        <div class="progress-bar" id="progress"></div>
+      </div>
+      <div class="progress-text" id="progress-text">0%</div>
+    </body>
+    </html>
+  `;
+
+  updateProgressWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(updateHTML)}`);
+  return updateProgressWindow;
+}
+
+// Auto-updater configuration - AGGRESSIVE FORCE UPDATE
 function setupAutoUpdater() {
-  // Configure auto-updater
-  autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = true;
+  // Configure auto-updater for aggressive updates
+  autoUpdater.autoDownload = false; // We control download manually
+  autoUpdater.autoInstallOnAppQuit = false; // We force restart manually
   
   // Auto-updater event handlers
   autoUpdater.on('checking-for-update', () => {
@@ -81,65 +153,98 @@ function setupAutoUpdater() {
   
   autoUpdater.on('update-available', (info) => {
     console.log('Update available:', info.version);
-    // Show dialog to user
+    
     if (mainWindow) {
+      // AGGRESSIVE UPDATE: Show modal dialog that forces update
       dialog.showMessageBox(mainWindow, {
         type: 'info',
-        title: 'Update Available',
+        title: 'Update Required',
         message: `Version ${info.version} is available`,
-        detail: 'The update will download in the background.',
-        buttons: ['OK']
+        detail: 'This update will be downloaded and installed automatically. The application will restart when complete.',
+        buttons: ['Download Now'],
+        defaultId: 0,
+        noLink: true
+      }).then(() => {
+        // Create progress window immediately
+        createUpdateProgressWindow();
+        // Disable main window interaction
+        if (mainWindow) {
+          mainWindow.setEnabled(false);
+        }
+        // Start download automatically
+        autoUpdater.downloadUpdate();
       });
-      mainWindow.webContents.send('update-available', info);
     }
   });
   
   autoUpdater.on('update-not-available', () => {
     console.log('No updates available');
+    // Only log, don't show any popup for no updates
   });
   
   autoUpdater.on('error', (err) => {
     console.error('Auto-updater error:', err);
-    // Send to renderer process
+    // Close progress window if it exists
+    if (updateProgressWindow) {
+      updateProgressWindow.close();
+      updateProgressWindow = null;
+    }
+    // Re-enable main window
     if (mainWindow) {
-      mainWindow.webContents.send('update-error', err);
+      mainWindow.setEnabled(true);
+    }
+    // Only show error if it's not a "no updates" error
+    if (!err.message.includes('No published versions') && !err.message.includes('Cannot find latest')) {
+      if (mainWindow) {
+        dialog.showErrorBox('Update Error', 'Failed to check for updates. Please try again later.');
+      }
     }
   });
   
   autoUpdater.on('download-progress', (progressObj) => {
-    let log_message = "Download speed: " + progressObj.bytesPerSecond;
-    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
-    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
-    console.log(log_message);
+    const percent = Math.round(progressObj.percent);
+    console.log(`Download progress: ${percent}%`);
     
-    // Send to renderer process
-    if (mainWindow) {
-      mainWindow.webContents.send('download-progress', progressObj);
+    // Update progress window
+    if (updateProgressWindow) {
+      updateProgressWindow.webContents.executeJavaScript(`
+        document.getElementById('progress').style.width = '${percent}%';
+        document.getElementById('progress-text').textContent = '${percent}%';
+      `);
     }
   });
   
   autoUpdater.on('update-downloaded', (info) => {
     console.log('Update downloaded:', info.version);
-    // Show restart dialog
+    
+    // Close progress window
+    if (updateProgressWindow) {
+      updateProgressWindow.close();
+      updateProgressWindow = null;
+    }
+    
+    // FORCE RESTART: No choice given to user
     if (mainWindow) {
       dialog.showMessageBox(mainWindow, {
         type: 'info',
-        title: 'Update Ready',
+        title: 'Update Complete',
         message: `Version ${info.version} has been downloaded`,
-        detail: 'The application will restart to apply the update.',
-        buttons: ['Restart Now', 'Later'],
-        defaultId: 0
-      }).then((result) => {
-        if (result.response === 0) {
-          autoUpdater.quitAndInstall();
-        }
+        detail: 'The application will restart now to apply the update.',
+        buttons: ['Restart Now'],
+        defaultId: 0,
+        noLink: true
+      }).then(() => {
+        // Force quit and install immediately
+        autoUpdater.quitAndInstall(false, true);
       });
-      mainWindow.webContents.send('update-downloaded', info);
     }
   });
   
-  // Check for updates
+  // Check for updates immediately and every 30 minutes
   autoUpdater.checkForUpdatesAndNotify();
+  setInterval(() => {
+    autoUpdater.checkForUpdatesAndNotify();
+  }, 30 * 60 * 1000); // Check every 30 minutes
 }
 
 // App event listeners
@@ -147,10 +252,8 @@ app.whenReady().then(() => {
   try {
     createWindow();
     
-    // Setup auto-updater after window is created
-    if (process.env.NODE_ENV !== 'development') {
-      setupAutoUpdater();
-    }
+    // Setup auto-updater after window is created - ALWAYS check for updates
+    setupAutoUpdater();
   } catch (error) {
     console.error('Failed to create window:', error);
     app.quit();
