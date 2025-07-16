@@ -349,3 +349,23 @@ ipcMain.handle('shell:openExternal', async (event, url) => {
 ipcMain.handle('app:restart', async () => {
   autoUpdater.quitAndInstall();
 });
+
+// Test auto-update functionality
+ipcMain.handle('app:checkForUpdates', async () => {
+  console.log('Manual update check requested');
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    return {
+      updateAvailable: result?.updateInfo ? true : false,
+      currentVersion: app.getVersion(),
+      updateInfo: result?.updateInfo || null
+    };
+  } catch (error) {
+    console.error('Update check failed:', error);
+    return {
+      updateAvailable: false,
+      currentVersion: app.getVersion(),
+      error: (error as Error).message
+    };
+  }
+});
