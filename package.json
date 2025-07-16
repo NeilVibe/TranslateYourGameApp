@@ -65,7 +65,8 @@
     },
     "linux": {
       "target": "AppImage",
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.png",
+      "artifactName": "Translate.Your.Game-${version}.${ext}"
     },
     "publish": {
       "provider": "github",
