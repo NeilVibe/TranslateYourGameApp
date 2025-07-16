@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Button, Typography, Space, Alert } from 'antd';
 import { KeyOutlined, GlobalOutlined } from '@ant-design/icons';
 
@@ -20,10 +20,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
+  // Update form when API key changes or modal opens
+  useEffect(() => {
+    if (visible) {
+      form.setFieldsValue({ apiKey });
+    }
+  }, [visible, apiKey, form]);
+
   const handleSubmit = async (values: { apiKey: string }) => {
     setLoading(true);
     try {
       await onSave(values.apiKey);
+      // Form will be closed by parent component after successful save
     } finally {
       setLoading(false);
     }
@@ -48,9 +56,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     >
       <div style={{ padding: '16px 0' }}>
         <Alert
-          message="API Key Required"
-          description="You need an API key to use this desktop app. Get one from your Translate Your Game account."
-          type="info"
+          message={apiKey ? "API Key Settings" : "API Key Required"}
+          description={apiKey ? 
+            "Your API key is saved securely. You can update it below if needed." :
+            "You need an API key to use this desktop app. Get one from your Translate Your Game account."
+          }
+          type={apiKey ? "success" : "info"}
           showIcon
           style={{ marginBottom: 24 }}
         />
@@ -107,10 +118,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         </Form>
 
         <div style={{ marginTop: 24, padding: 16, backgroundColor: '#f5f5f5', borderRadius: 6 }}>
-          <Text strong>Security Note:</Text>
+          <Text strong>Security & Storage:</Text>
           <Paragraph type="secondary" style={{ margin: '8px 0 0 0', fontSize: 12 }}>
-            Your API key is stored locally on your device and never shared with third parties.
-            It's used only to authenticate with the Translate Your Game API.
+            • Your API key is automatically saved and encrypted locally on your device<br/>
+            • Never shared with third parties - used only for Translate Your Game API<br/>
+            • You only need to enter it once - it will be remembered for future sessions
           </Paragraph>
         </div>
       </div>
