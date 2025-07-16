@@ -73,8 +73,8 @@ let updateProgressWindow: BrowserWindow | null = null;
 
 function createUpdateProgressWindow() {
   updateProgressWindow = new BrowserWindow({
-    width: 400,
-    height: 200,
+    width: 450,
+    height: 280,
     resizable: false,
     minimizable: false,
     maximizable: false,
@@ -82,13 +82,14 @@ function createUpdateProgressWindow() {
     alwaysOnTop: true,
     center: true,
     frame: false,
+    transparent: true,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
     }
   });
 
-  // Create a simple HTML page for update progress
+  // Create an enhanced HTML page for update progress
   const updateHTML = `
     <!DOCTYPE html>
     <html>
@@ -98,40 +99,144 @@ function createUpdateProgressWindow() {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           margin: 0;
           padding: 20px;
-          background: #1a1a1a;
+          background: rgba(26, 26, 26, 0.98);
+          backdrop-filter: blur(10px);
           color: #fff;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
           height: 160px;
+          user-select: none;
         }
-        .title { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
-        .message { font-size: 14px; margin-bottom: 20px; color: #ccc; }
+        
+        .icon-container {
+          margin-bottom: 15px;
+        }
+        
+        .download-icon {
+          width: 32px;
+          height: 32px;
+          animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 0.6; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.1); }
+        }
+        
+        .title { 
+          font-size: 18px; 
+          font-weight: 600; 
+          margin-bottom: 5px; 
+        }
+        
+        .version-info {
+          font-size: 12px;
+          color: #8b5cf6;
+          margin-bottom: 15px;
+          font-weight: 500;
+        }
+        
+        .message { 
+          font-size: 14px; 
+          margin-bottom: 20px; 
+          color: #ccc; 
+        }
+        
         .progress-container {
-          width: 300px;
-          height: 8px;
-          background: #333;
-          border-radius: 4px;
+          width: 340px;
+          height: 10px;
+          background: #2a2a2a;
+          border-radius: 5px;
           overflow: hidden;
           margin-bottom: 10px;
+          box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
         }
+        
         .progress-bar {
           height: 100%;
-          background: linear-gradient(90deg, #8b5cf6, #a855f7);
+          background: linear-gradient(90deg, #8b5cf6, #a855f7, #8b5cf6);
+          background-size: 200% 100%;
+          animation: gradient 3s ease infinite;
           transition: width 0.3s ease;
           width: 0%;
+          box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
         }
-        .progress-text { font-size: 12px; color: #888; }
+        
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
+        }
+        
+        .stats-container {
+          display: flex;
+          justify-content: space-between;
+          width: 340px;
+          font-size: 11px;
+          color: #999;
+          margin-bottom: 5px;
+        }
+        
+        .download-info {
+          display: flex;
+          gap: 15px;
+        }
+        
+        .progress-text { 
+          font-size: 13px; 
+          color: #fff;
+          font-weight: 500;
+        }
+        
+        .success-icon {
+          display: none;
+          width: 48px;
+          height: 48px;
+          margin: 20px 0;
+          animation: checkmark 0.5s ease-out;
+        }
+        
+        @keyframes checkmark {
+          0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+          50% { transform: scale(1.2) rotate(-45deg); }
+          100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
       </style>
     </head>
     <body>
+      <div class="icon-container">
+        <svg class="download-icon" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+      </div>
+      
       <div class="title">Updating Translate Your Game</div>
-      <div class="message">Downloading update...</div>
+      <div class="version-info" id="version-info">Preparing update...</div>
+      <div class="message" id="message">Downloading update...</div>
+      
       <div class="progress-container">
         <div class="progress-bar" id="progress"></div>
       </div>
+      
+      <div class="stats-container">
+        <div class="download-info">
+          <span id="downloaded">0 MB</span>
+          <span>/</span>
+          <span id="total">0 MB</span>
+          <span id="speed">0 MB/s</span>
+        </div>
+        <div id="time-remaining">Calculating...</div>
+      </div>
+      
       <div class="progress-text" id="progress-text">0%</div>
+      
+      <svg class="success-icon" id="success-icon" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M7 12l3 3 7-7"></path>
+      </svg>
     </body>
     </html>
   `;
@@ -155,6 +260,10 @@ function setupAutoUpdater() {
     console.log('Update available:', info.version);
     
     if (mainWindow) {
+      // Store update info for progress window
+      const currentVersion = app.getVersion();
+      const newVersion = info.version;
+      
       // AGGRESSIVE UPDATE: Show modal dialog that forces update
       dialog.showMessageBox(mainWindow, {
         type: 'info',
@@ -167,6 +276,14 @@ function setupAutoUpdater() {
       }).then(() => {
         // Create progress window immediately
         createUpdateProgressWindow();
+        
+        // Set version info in progress window
+        if (updateProgressWindow) {
+          updateProgressWindow.webContents.executeJavaScript(`
+            document.getElementById('version-info').textContent = 'v${currentVersion} → v${newVersion}';
+          `);
+        }
+        
         // Disable main window interaction
         if (mainWindow) {
           mainWindow.setEnabled(false);
@@ -205,11 +322,35 @@ function setupAutoUpdater() {
     const percent = Math.round(progressObj.percent);
     console.log(`Download progress: ${percent}%`);
     
+    // Calculate stats
+    const downloadedMB = (progressObj.transferred / 1024 / 1024).toFixed(1);
+    const totalMB = (progressObj.total / 1024 / 1024).toFixed(1);
+    const speedMB = (progressObj.bytesPerSecond / 1024 / 1024).toFixed(2);
+    
+    // Calculate time remaining
+    const bytesRemaining = progressObj.total - progressObj.transferred;
+    const secondsRemaining = Math.round(bytesRemaining / progressObj.bytesPerSecond);
+    let timeRemaining = 'Calculating...';
+    
+    if (secondsRemaining < 60) {
+      timeRemaining = `${secondsRemaining}s remaining`;
+    } else if (secondsRemaining < 3600) {
+      const minutes = Math.floor(secondsRemaining / 60);
+      const seconds = secondsRemaining % 60;
+      timeRemaining = `${minutes}m ${seconds}s remaining`;
+    } else {
+      timeRemaining = 'A while remaining';
+    }
+    
     // Update progress window
     if (updateProgressWindow) {
       updateProgressWindow.webContents.executeJavaScript(`
         document.getElementById('progress').style.width = '${percent}%';
         document.getElementById('progress-text').textContent = '${percent}%';
+        document.getElementById('downloaded').textContent = '${downloadedMB} MB';
+        document.getElementById('total').textContent = '${totalMB} MB';
+        document.getElementById('speed').textContent = '${speedMB} MB/s';
+        document.getElementById('time-remaining').textContent = '${timeRemaining}';
       `);
     }
   });
@@ -217,26 +358,40 @@ function setupAutoUpdater() {
   autoUpdater.on('update-downloaded', (info) => {
     console.log('Update downloaded:', info.version);
     
-    // Close progress window
+    // Show success animation in progress window
     if (updateProgressWindow) {
-      updateProgressWindow.close();
-      updateProgressWindow = null;
-    }
-    
-    // FORCE RESTART: No choice given to user
-    if (mainWindow) {
-      dialog.showMessageBox(mainWindow, {
-        type: 'info',
-        title: 'Update Complete',
-        message: `Version ${info.version} has been downloaded`,
-        detail: 'The application will restart now to apply the update.',
-        buttons: ['Restart Now'],
-        defaultId: 0,
-        noLink: true
-      }).then(() => {
-        // Force quit and install immediately
-        autoUpdater.quitAndInstall(false, true);
-      });
+      updateProgressWindow.webContents.executeJavaScript(`
+        document.getElementById('progress').style.width = '100%';
+        document.getElementById('progress-text').textContent = '100%';
+        document.getElementById('message').textContent = 'Download complete!';
+        document.querySelector('.download-icon').style.display = 'none';
+        document.getElementById('success-icon').style.display = 'block';
+        document.getElementById('time-remaining').textContent = 'Preparing to restart...';
+      `);
+      
+      // Wait for animation then close
+      setTimeout(() => {
+        if (updateProgressWindow) {
+          updateProgressWindow.close();
+          updateProgressWindow = null;
+        }
+        
+        // FORCE RESTART: No choice given to user
+        if (mainWindow) {
+          dialog.showMessageBox(mainWindow, {
+            type: 'info',
+            title: 'Update Complete',
+            message: `Version ${info.version} has been downloaded`,
+            detail: 'The application will restart now to apply the update.',
+            buttons: ['Restart Now'],
+            defaultId: 0,
+            noLink: true
+          }).then(() => {
+            // Force quit and install immediately
+            autoUpdater.quitAndInstall(false, true);
+          });
+        }
+      }, 1500); // Show success for 1.5 seconds
     }
   });
   
