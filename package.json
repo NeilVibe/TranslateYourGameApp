@@ -1,6 +1,6 @@
 {
   "name": "translate-your-game-desktop",
-  "version": "1.0.38",
+  "version": "1.0.39",
   "description": "Professional game localization desktop app",
   "main": "build/main.js",
   "scripts": {
