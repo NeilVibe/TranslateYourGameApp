@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout, Button, Typography, Space, Badge, Menu } from 'antd';
-import { SettingOutlined, GlobalOutlined, MessageOutlined, FileTextOutlined, BookOutlined, ThunderboltOutlined, ApiOutlined, BarChartOutlined } from '@ant-design/icons';
+import { SettingOutlined, GlobalOutlined, MessageOutlined, FileTextOutlined, BookOutlined, ThunderboltOutlined, ApiOutlined } from '@ant-design/icons';
 
 const { Header: AntHeader } = Layout;
 const { Title, Text } = Typography;
@@ -35,11 +35,6 @@ const Header: React.FC<HeaderProps> = ({
       key: 'glossaries',
       icon: <BookOutlined />,
       label: 'Glossaries'
-    },
-    {
-      key: 'usage',
-      icon: <BarChartOutlined />,
-      label: 'Usage'
     }
   ];
 

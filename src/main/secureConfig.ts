@@ -14,7 +14,9 @@ class SecureConfig {
     
     constructor() {
         this.configPath = path.join(app.getPath('userData'), 'secure-config.json');
+        console.log('SecureConfig: Config path:', this.configPath);
         this.config = this.loadConfig();
+        console.log('SecureConfig: Initial config loaded:', this.config);
     }
 
     // Load configuration from disk
@@ -66,13 +68,20 @@ class SecureConfig {
 
     // Get API key
     getApiKey(): string | null {
-        return typeof this.config.apiKey === 'string' ? this.config.apiKey : null;
+        console.log('SecureConfig: Getting API key, current config:', this.config);
+        const result = typeof this.config.apiKey === 'string' ? this.config.apiKey : null;
+        console.log('SecureConfig: Returning API key:', result ? result.substring(0, 20) + '...' : 'null');
+        return result;
     }
 
     // Set API key
     setApiKey(apiKey: string): boolean {
+        console.log('SecureConfig: Setting API key:', apiKey.substring(0, 20) + '...');
         this.config.apiKey = apiKey;
-        return this.saveConfig();
+        const result = this.saveConfig();
+        console.log('SecureConfig: Save result:', result);
+        console.log('SecureConfig: Config after save:', this.config);
+        return result;
     }
 
     // Clear API key
