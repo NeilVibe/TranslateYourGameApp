@@ -15,6 +15,9 @@ class SecureConfig {
     constructor() {
         this.configPath = path.join(app.getPath('userData'), 'secure-config.json');
         console.log('SecureConfig: Config path:', this.configPath);
+        console.log('SecureConfig: Platform:', process.platform);
+        console.log('SecureConfig: User data path:', app.getPath('userData'));
+        console.log('SecureConfig: Encryption available:', safeStorage.isEncryptionAvailable());
         this.config = this.loadConfig();
         console.log('SecureConfig: Initial config loaded:', this.config);
     }
@@ -49,19 +52,43 @@ class SecureConfig {
         try {
             const toSave = { ...this.config };
             
+            console.log('SecureConfig: Saving config to:', this.configPath);
+            console.log('SecureConfig: Directory exists:', fs.existsSync(path.dirname(this.configPath)));
+            
+            // Ensure directory exists
+            const dir = path.dirname(this.configPath);
+            if (!fs.existsSync(dir)) {
+                console.log('SecureConfig: Creating directory:', dir);
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            
             // Encrypt sensitive fields if encryption is available
             if (safeStorage.isEncryptionAvailable() && toSave.apiKey && typeof toSave.apiKey === 'string') {
+                console.log('SecureConfig: Using encryption for API key');
                 const encrypted = safeStorage.encryptString(toSave.apiKey);
                 toSave.apiKey = {
                     encrypted: true,
                     data: encrypted.toString('base64')
                 };
+            } else {
+                console.log('SecureConfig: Encryption not available, saving as plain text');
             }
             
             fs.writeFileSync(this.configPath, JSON.stringify(toSave, null, 2));
+            console.log('SecureConfig: File written successfully');
+            
+            // Verify file was written
+            const exists = fs.existsSync(this.configPath);
+            console.log('SecureConfig: File exists after write:', exists);
+            
             return true;
         } catch (error) {
             console.error('Error saving secure config:', error);
+            console.error('Error details:', {
+                name: (error as Error).name,
+                message: (error as Error).message,
+                stack: (error as Error).stack
+            });
             return false;
         }
     }
