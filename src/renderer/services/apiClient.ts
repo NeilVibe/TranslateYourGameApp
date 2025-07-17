@@ -301,6 +301,33 @@ class APIClient {
     const response = await this.client.get('/auth/token-balance');
     return response.data;
   }
+
+  // Change password
+  async changePassword(currentPassword: string, newPassword: string) {
+    const response = await this.client.post('/auth/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword
+    });
+    return response.data;
+  }
+
+  // Update profile
+  async updateProfile(data: { username?: string; email?: string; company?: string }) {
+    const response = await this.client.put('/auth/update-profile', data);
+    return response.data;
+  }
+
+  // Get API usage statistics
+  async getApiUsage(options?: { startDate?: string; endDate?: string; groupBy?: string }) {
+    const params = new URLSearchParams();
+    if (options?.startDate) params.append('start_date', options.startDate);
+    if (options?.endDate) params.append('end_date', options.endDate);
+    if (options?.groupBy) params.append('group_by', options.groupBy);
+    
+    const url = `/auth/api-usage${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await this.client.get(url);
+    return response.data;
+  }
 }
 
 export default new APIClient();

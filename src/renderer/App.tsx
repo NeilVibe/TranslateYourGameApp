@@ -10,6 +10,7 @@ import MinimalChatbotTranslation from './components/MinimalChatbotTranslation';
 import ProfessionalGlossaryManager from './components/ProfessionalGlossaryManager';
 import ProfessionalFileTranslation from './components/ProfessionalFileTranslation';
 import UpdateNotification from './components/UpdateNotification';
+import ApiUsageDashboard from './components/ApiUsageDashboard';
 import './App.css';
 
 const { Content } = Layout;
@@ -294,6 +295,11 @@ function App() {
             apiKey={state.apiKey || ''}
             apiBaseUrl="http://localhost:5002/api/v1"
           />
+        );
+
+      case 'usage':
+        return (
+          <ApiUsageDashboard />
         );
 
 

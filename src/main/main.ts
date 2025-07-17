@@ -3,6 +3,12 @@ import { autoUpdater } from 'electron-updater';
 import * as path from 'path';
 import * as fs from 'fs';
 
+// Debug logging at startup
+console.log('=== MAIN PROCESS STARTING ===');
+console.log('electron-updater module loaded:', !!autoUpdater);
+console.log('App version:', app.getVersion());
+console.log('App name:', app.getName());
+
 let mainWindow: BrowserWindow | null = null;
 
 // Disable GPU acceleration to fix display issues
@@ -247,17 +253,57 @@ function createUpdateProgressWindow() {
 
 // Auto-updater configuration - AGGRESSIVE FORCE UPDATE
 function setupAutoUpdater() {
+  console.log('=== AUTO-UPDATER SETUP STARTING ===');
+  console.log(`App version: ${app.getVersion()}`);
+  console.log(`Platform: ${process.platform}`);
+  console.log(`Arch: ${process.arch}`);
+  console.log(`Electron version: ${process.versions.electron}`);
+  console.log(`App path: ${app.getAppPath()}`);
+  console.log(`Exe path: ${app.getPath('exe')}`);
+  
   // Configure auto-updater for aggressive updates
   autoUpdater.autoDownload = true; // Enable automatic downloads
   autoUpdater.autoInstallOnAppQuit = false; // We force restart manually
   
+  // Enable debug logging
+  const log = require('electron-log');
+  autoUpdater.logger = log;
+  if (log.transports && log.transports.file) {
+    log.transports.file.level = 'debug';
+    console.log(`Log file: ${log.transports.file.getFile()?.path}`);
+  }
+  
+  // Windows-specific debugging
+  if (process.platform === 'win32') {
+    console.log('=== WINDOWS PLATFORM DETECTED ===');
+    console.log(`Windows version: ${process.getSystemVersion()}`);
+    console.log(`Is packaged: ${app.isPackaged}`);
+    console.log(`Resources path: ${process.resourcesPath}`);
+    console.log(`Temp directory: ${app.getPath('temp')}`);
+    
+    // Force specific provider config for Windows
+    autoUpdater.setFeedURL({
+      provider: 'github',
+      owner: 'NeilVibe',
+      repo: 'TranslateYourGameApp',
+      private: false,
+      protocol: 'https'
+    });
+  }
+  
   // Auto-updater event handlers
   autoUpdater.on('checking-for-update', () => {
-    console.log('Checking for updates...');
+    console.log('=== CHECKING FOR UPDATE ===');
+    console.log(`Time: ${new Date().toISOString()}`);
+    console.log('GitHub API call initiated...');
   });
   
   autoUpdater.on('update-available', (info) => {
-    console.log('Update available:', info.version);
+    console.log('=== UPDATE AVAILABLE ===');
+    console.log('Full update info:', JSON.stringify(info, null, 2));
+    console.log(`Version: ${info.version}`);
+    console.log(`Release date: ${info.releaseDate}`);
+    console.log(`Release notes: ${info.releaseNotes}`);
     
     if (mainWindow) {
       // Store update info for progress window
@@ -295,12 +341,39 @@ function setupAutoUpdater() {
   });
   
   autoUpdater.on('update-not-available', () => {
-    console.log('No updates available');
-    // Only log, don't show any popup for no updates
+    console.log('=== NO UPDATE AVAILABLE ===');
+    console.log(`Current version ${app.getVersion()} is the latest`);
+    console.log(`Checked at: ${new Date().toISOString()}`);
   });
   
   autoUpdater.on('error', (err) => {
-    console.error('Auto-updater error:', err);
+    console.error('=== AUTO-UPDATER ERROR ===');
+    console.error('Error type:', err.name);
+    console.error('Error message:', err.message);
+    console.error('Error stack:', err.stack);
+    console.error('Full error object:', JSON.stringify(err, null, 2));
+    
+    // Windows-specific error analysis
+    if (process.platform === 'win32') {
+      console.error('=== WINDOWS ERROR ANALYSIS ===');
+      
+      // Common Windows errors
+      if (err.message.includes('net::ERR_')) {
+        console.error('Network error detected. Check firewall/proxy settings.');
+      }
+      if (err.message.includes('ENOENT')) {
+        console.error('File not found. Check if update assets exist.');
+      }
+      if (err.message.includes('EPERM') || err.message.includes('EACCES')) {
+        console.error('Permission error. App may need to run as administrator.');
+      }
+      if (err.message.includes('Cannot find module')) {
+        console.error('Module loading error. Check electron-updater installation.');
+      }
+      if (err.message.includes('GitHub')) {
+        console.error('GitHub API error. Check release assets and manifests.');
+      }
+    }
     // Close progress window if it exists
     if (updateProgressWindow) {
       updateProgressWindow.close();
@@ -320,7 +393,10 @@ function setupAutoUpdater() {
   
   autoUpdater.on('download-progress', (progressObj) => {
     const percent = Math.round(progressObj.percent);
-    console.log(`Download progress: ${percent}%`);
+    console.log('=== DOWNLOAD PROGRESS ===');
+    console.log(`Progress: ${percent}%`);
+    console.log(`Downloaded: ${progressObj.transferred} / ${progressObj.total} bytes`);
+    console.log(`Speed: ${progressObj.bytesPerSecond} bytes/sec`);
     
     // Calculate stats
     const downloadedMB = (progressObj.transferred / 1024 / 1024).toFixed(1);
@@ -356,7 +432,9 @@ function setupAutoUpdater() {
   });
   
   autoUpdater.on('update-downloaded', (info) => {
-    console.log('Update downloaded:', info.version);
+    console.log('=== UPDATE DOWNLOADED ===');
+    console.log('Downloaded version:', info.version);
+    console.log('Download complete at:', new Date().toISOString());
     
     // Show success animation in progress window
     if (updateProgressWindow) {
@@ -396,8 +474,46 @@ function setupAutoUpdater() {
   });
   
   // Check for updates immediately and every 30 minutes
-  autoUpdater.checkForUpdatesAndNotify();
+  console.log('=== INITIATING UPDATE CHECK ===');
+  console.log('Calling autoUpdater.checkForUpdatesAndNotify()...');
+  
+  // Add manual check command for debugging
+  ipcMain.on('check-for-updates', () => {
+    console.log('Manual update check requested');
+    autoUpdater.checkForUpdatesAndNotify();
+  });
+  
+  autoUpdater.checkForUpdatesAndNotify()
+    .then((result) => {
+      console.log('=== UPDATE CHECK RESULT ===');
+      console.log('Result:', result);
+      
+      // Windows-specific result logging
+      if (process.platform === 'win32' && result) {
+        console.log('Windows update check successful');
+        console.log('Update available:', result.isUpdateAvailable);
+        if (result.versionInfo) {
+          console.log('Latest version:', result.versionInfo.version);
+        }
+      }
+    })
+    .catch((error) => {
+      console.error('=== UPDATE CHECK FAILED ===');
+      console.error('Error:', error);
+      
+      // Windows-specific error guidance
+      if (process.platform === 'win32') {
+        console.error('\n=== WINDOWS TROUBLESHOOTING ===');
+        console.error('1. Check Windows Defender/Firewall - may block GitHub');
+        console.error('2. Try running as Administrator');
+        console.error('3. Check proxy settings if behind corporate network');
+        console.error('4. Verify internet connection to github.com');
+        console.error('5. Log file location:', app.getPath('userData') + '\\logs\\main.log');
+      }
+    });
+  
   setInterval(() => {
+    console.log('=== PERIODIC UPDATE CHECK ===');
     autoUpdater.checkForUpdatesAndNotify();
   }, 30 * 60 * 1000); // Check every 30 minutes
 }
