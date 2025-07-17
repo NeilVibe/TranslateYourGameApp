@@ -158,8 +158,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           <div style={{ padding: '16px 0' }}>
             <div style={{ textAlign: 'center', padding: 40 }}>
               <Title level={3}>Manage Your Profile</Title>
-              <Paragraph style={{ marginBottom: 24, fontSize: 16 }}>
-                Access your full profile, billing information, usage statistics, and account settings on the web dashboard.
+              <Paragraph style={{ marginBottom: 24, fontSize: 15, color: '#8c8c8c' }}>
+                Access your profile, billing, usage statistics, and account settings on the web dashboard.
               </Paragraph>
               
               <Button 
@@ -177,9 +177,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 Open My Profile
               </Button>
               
-              <div style={{ marginTop: 32, padding: 16, backgroundColor: '#f0f9ff', borderRadius: 6, border: '1px solid #bae6fd' }}>
-                <Text strong style={{ color: '#0369a1' }}>Available on Web Profile:</Text>
-                <Paragraph style={{ margin: '8px 0 0 0', fontSize: 13, color: '#075985' }}>
+              <div style={{ 
+                marginTop: 32, 
+                padding: 18, 
+                backgroundColor: '#1a1a2e', 
+                borderRadius: 8, 
+                border: '1px solid #8b5cf6' 
+              }}>
+                <Text strong style={{ color: '#a855f7', fontSize: 14 }}>Available on Web Profile:</Text>
+                <Paragraph style={{ 
+                  margin: '10px 0 0 0', 
+                  fontSize: 13, 
+                  color: '#e5e7eb',
+                  lineHeight: 1.6
+                }}>
                   • Update profile information & password<br/>
                   • View detailed usage statistics & billing<br/>
                   • Manage API keys & subscription<br/>

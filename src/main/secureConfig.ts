@@ -30,9 +30,24 @@ class SecureConfig {
                 const data = fs.readFileSync(this.configPath, 'utf8');
                 const parsed = JSON.parse(data);
                 
-                // Decrypt sensitive fields if encryption is available
-                if (safeStorage.isEncryptionAvailable() && parsed.apiKey && typeof parsed.apiKey === 'object' && parsed.apiKey.encrypted) {
-                    parsed.apiKey = safeStorage.decryptString(Buffer.from(parsed.apiKey.data, 'base64'));
+                // Handle encrypted API key with robust fallback
+                if (parsed.apiKey && typeof parsed.apiKey === 'object' && parsed.apiKey.encrypted) {
+                    log.info('SecureConfig: Found encrypted API key, attempting decryption...');
+                    
+                    if (safeStorage.isEncryptionAvailable()) {
+                        try {
+                            const decrypted = safeStorage.decryptString(Buffer.from(parsed.apiKey.data, 'base64'));
+                            parsed.apiKey = decrypted;
+                            log.info('SecureConfig: Successfully decrypted API key');
+                        } catch (decryptError) {
+                            log.error('SecureConfig: Failed to decrypt API key:', decryptError);
+                            // Keep encrypted object for later retry
+                            log.info('SecureConfig: Will retry decryption when encryption becomes available');
+                        }
+                    } else {
+                        log.warn('SecureConfig: Encryption not available during startup, will retry later');
+                        // Keep encrypted object for later retry
+                    }
                 }
                 
                 return parsed;
@@ -94,9 +109,31 @@ class SecureConfig {
         }
     }
 
-    // Get API key
+    // Get API key with retry logic for Windows encryption timing
     getApiKey(): string | null {
         log.info('SecureConfig: Getting API key, current config:', this.config);
+        
+        // If we have an encrypted key that hasn't been decrypted yet, try now
+        if (this.config.apiKey && typeof this.config.apiKey === 'object' && this.config.apiKey.encrypted) {
+            log.info('SecureConfig: Found encrypted API key, attempting delayed decryption...');
+            
+            if (safeStorage.isEncryptionAvailable()) {
+                try {
+                    const decrypted = safeStorage.decryptString(Buffer.from(this.config.apiKey.data, 'base64'));
+                    this.config.apiKey = decrypted;
+                    log.info('SecureConfig: Successfully decrypted API key on retry');
+                    // Save the decrypted version for future use
+                    this.saveConfig();
+                } catch (decryptError) {
+                    log.error('SecureConfig: Failed to decrypt API key on retry:', decryptError);
+                    return null;
+                }
+            } else {
+                log.warn('SecureConfig: Encryption still not available, returning null');
+                return null;
+            }
+        }
+        
         const result = typeof this.config.apiKey === 'string' ? this.config.apiKey : null;
         log.info('SecureConfig: Returning API key:', result ? result.substring(0, 20) + '...' : 'null');
         return result;
