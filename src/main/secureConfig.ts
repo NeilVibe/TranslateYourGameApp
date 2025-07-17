@@ -2,6 +2,7 @@
 import { safeStorage, app } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
+import log from 'electron-log';
 
 interface ConfigData {
     apiKey: string | null | { encrypted: boolean; data: string };
@@ -14,12 +15,12 @@ class SecureConfig {
     
     constructor() {
         this.configPath = path.join(app.getPath('userData'), 'secure-config.json');
-        console.log('SecureConfig: Config path:', this.configPath);
-        console.log('SecureConfig: Platform:', process.platform);
-        console.log('SecureConfig: User data path:', app.getPath('userData'));
-        console.log('SecureConfig: Encryption available:', safeStorage.isEncryptionAvailable());
+        log.info('SecureConfig: Config path:', this.configPath);
+        log.info('SecureConfig: Platform:', process.platform);
+        log.info('SecureConfig: User data path:', app.getPath('userData'));
+        log.info('SecureConfig: Encryption available:', safeStorage.isEncryptionAvailable());
         this.config = this.loadConfig();
-        console.log('SecureConfig: Initial config loaded:', this.config);
+        log.info('SecureConfig: Initial config loaded:', this.config);
     }
 
     // Load configuration from disk
@@ -37,7 +38,7 @@ class SecureConfig {
                 return parsed;
             }
         } catch (error) {
-            console.error('Error loading secure config:', error);
+            log.error('Error loading secure config:', error);
         }
         
         // Return default config without hardcoded keys
@@ -52,39 +53,39 @@ class SecureConfig {
         try {
             const toSave = { ...this.config };
             
-            console.log('SecureConfig: Saving config to:', this.configPath);
-            console.log('SecureConfig: Directory exists:', fs.existsSync(path.dirname(this.configPath)));
+            log.info('SecureConfig: Saving config to:', this.configPath);
+            log.info('SecureConfig: Directory exists:', fs.existsSync(path.dirname(this.configPath)));
             
             // Ensure directory exists
             const dir = path.dirname(this.configPath);
             if (!fs.existsSync(dir)) {
-                console.log('SecureConfig: Creating directory:', dir);
+                log.info('SecureConfig: Creating directory:', dir);
                 fs.mkdirSync(dir, { recursive: true });
             }
             
             // Encrypt sensitive fields if encryption is available
             if (safeStorage.isEncryptionAvailable() && toSave.apiKey && typeof toSave.apiKey === 'string') {
-                console.log('SecureConfig: Using encryption for API key');
+                log.info('SecureConfig: Using encryption for API key');
                 const encrypted = safeStorage.encryptString(toSave.apiKey);
                 toSave.apiKey = {
                     encrypted: true,
                     data: encrypted.toString('base64')
                 };
             } else {
-                console.log('SecureConfig: Encryption not available, saving as plain text');
+                log.info('SecureConfig: Encryption not available, saving as plain text');
             }
             
             fs.writeFileSync(this.configPath, JSON.stringify(toSave, null, 2));
-            console.log('SecureConfig: File written successfully');
+            log.info('SecureConfig: File written successfully');
             
             // Verify file was written
             const exists = fs.existsSync(this.configPath);
-            console.log('SecureConfig: File exists after write:', exists);
+            log.info('SecureConfig: File exists after write:', exists);
             
             return true;
         } catch (error) {
-            console.error('Error saving secure config:', error);
-            console.error('Error details:', {
+            log.error('Error saving secure config:', error);
+            log.error('Error details:', {
                 name: (error as Error).name,
                 message: (error as Error).message,
                 stack: (error as Error).stack
@@ -95,19 +96,19 @@ class SecureConfig {
 
     // Get API key
     getApiKey(): string | null {
-        console.log('SecureConfig: Getting API key, current config:', this.config);
+        log.info('SecureConfig: Getting API key, current config:', this.config);
         const result = typeof this.config.apiKey === 'string' ? this.config.apiKey : null;
-        console.log('SecureConfig: Returning API key:', result ? result.substring(0, 20) + '...' : 'null');
+        log.info('SecureConfig: Returning API key:', result ? result.substring(0, 20) + '...' : 'null');
         return result;
     }
 
     // Set API key
     setApiKey(apiKey: string): boolean {
-        console.log('SecureConfig: Setting API key:', apiKey.substring(0, 20) + '...');
+        log.info('SecureConfig: Setting API key:', apiKey.substring(0, 20) + '...');
         this.config.apiKey = apiKey;
         const result = this.saveConfig();
-        console.log('SecureConfig: Save result:', result);
-        console.log('SecureConfig: Config after save:', this.config);
+        log.info('SecureConfig: Save result:', result);
+        log.info('SecureConfig: Config after save:', this.config);
         return result;
     }
 
