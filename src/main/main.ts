@@ -310,33 +310,25 @@ function setupAutoUpdater() {
       const currentVersion = app.getVersion();
       const newVersion = info.version;
       
-      // AGGRESSIVE UPDATE: Show modal dialog that forces update
-      dialog.showMessageBox(mainWindow, {
-        type: 'info',
-        title: 'Update Required',
-        message: `Version ${info.version} is available`,
-        detail: 'This update will be downloaded and installed automatically. The application will restart when complete.',
-        buttons: ['Download Now'],
-        defaultId: 0,
-        noLink: true
-      }).then(() => {
-        // Create progress window immediately
-        createUpdateProgressWindow();
-        
-        // Set version info in progress window
-        if (updateProgressWindow) {
-          updateProgressWindow.webContents.executeJavaScript(`
-            document.getElementById('version-info').textContent = 'v${currentVersion} → v${newVersion}';
-          `);
-        }
-        
-        // Disable main window interaction
-        if (mainWindow) {
-          mainWindow.setEnabled(false);
-        }
-        // Start download automatically
-        autoUpdater.downloadUpdate();
-      });
+      // FULLY AUTOMATIC UPDATE: No confirmation needed
+      console.log('Starting automatic update download...');
+      
+      // Create progress window immediately
+      createUpdateProgressWindow();
+      
+      // Set version info in progress window
+      if (updateProgressWindow) {
+        updateProgressWindow.webContents.executeJavaScript(`
+          document.getElementById('version-info').textContent = 'v${currentVersion} → v${newVersion}';
+        `);
+      }
+      
+      // Disable main window interaction
+      if (mainWindow) {
+        mainWindow.setEnabled(false);
+      }
+      // Start download automatically without user confirmation
+      autoUpdater.downloadUpdate();
     }
   });
   
@@ -444,31 +436,19 @@ function setupAutoUpdater() {
         document.getElementById('message').textContent = 'Download complete!';
         document.querySelector('.download-icon').style.display = 'none';
         document.getElementById('success-icon').style.display = 'block';
-        document.getElementById('time-remaining').textContent = 'Preparing to restart...';
+        document.getElementById('time-remaining').textContent = 'Restarting now...';
       `);
       
-      // Wait for animation then close
+      // Wait for animation then restart automatically
       setTimeout(() => {
         if (updateProgressWindow) {
           updateProgressWindow.close();
           updateProgressWindow = null;
         }
         
-        // FORCE RESTART: No choice given to user
-        if (mainWindow) {
-          dialog.showMessageBox(mainWindow, {
-            type: 'info',
-            title: 'Update Complete',
-            message: `Version ${info.version} has been downloaded`,
-            detail: 'The application will restart now to apply the update.',
-            buttons: ['Restart Now'],
-            defaultId: 0,
-            noLink: true
-          }).then(() => {
-            // Force quit and install immediately
-            autoUpdater.quitAndInstall(false, true);
-          });
-        }
+        // AUTOMATIC RESTART: No user confirmation needed
+        console.log('Automatically restarting to apply update...');
+        autoUpdater.quitAndInstall(false, true);
       }, 1500); // Show success for 1.5 seconds
     }
   });
