@@ -90,8 +90,12 @@ function createUpdateProgressWindow() {
     frame: false,
     transparent: true,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      nodeIntegration: false,
+      contextIsolation: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      experimentalFeatures: false,
+      plugins: false
     }
   });
 
