@@ -28,8 +28,8 @@
     "localization",
     "translation"
   ],
-  "author": "Translate Your Game",
-  "license": "MIT",
+  "author": "Neil Schmitt",
+  "license": "UNLICENSED",
   "build": {
     "appId": "com.translateyourgame.desktop",
     "productName": "Translate Your Game",

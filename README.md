@@ -2,6 +2,10 @@
 
 **Enterprise-grade game localization** powered by AI translation with bulletproof security and automatic updates.
 
+---
+**© 2025 Neil Schmitt. All Rights Reserved. Proprietary Software.**
+---
+
 [![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-brightgreen)](https://github.com/NeilVibe/TranslateYourGameApp/releases)
 [![Version](https://img.shields.io/badge/Version-1.0.42-blue)](https://github.com/NeilVibe/TranslateYourGameApp/releases/latest)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/NeilVibe/TranslateYourGameApp/releases/latest)
