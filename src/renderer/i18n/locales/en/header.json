@@ -1,0 +1,9 @@
+{
+  "tabs": {
+    "chatbot": "Chatbot",
+    "file_translation": "File Translation",
+    "glossaries": "Glossaries"
+  },
+  "token_balance": "{{balance}} tokens",
+  "settings": "Settings"
+}

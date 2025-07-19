@@ -1,0 +1,43 @@
+{
+  "title": "Gestion du glossaire",
+  "table": {
+    "source_text": "Texte source", 
+    "target_text": "Texte cible",
+    "click_to_edit": "Cliquez sur le texte pour éditer en ligne"
+  },
+  "upload": {
+    "title": "Téléchargement du glossaire",
+    "button": "Télécharger le glossaire",
+    "drag_text": "Glissez les fichiers ici",
+    "browse_text": "Parcourir"
+  },
+  "actions": {
+    "create": "Créer un glossaire",
+    "edit": "Modifier",
+    "delete": "Supprimer", 
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "add_entry": "Ajouter une entrée",
+    "export": "Exporter",
+    "import": "Importer"
+  },
+  "forms": {
+    "name_label": "Nom du glossaire",
+    "description_label": "Description",
+    "source_label": "Texte source",
+    "target_label": "Texte cible"
+  },
+  "messages": {
+    "created_success": "Glossaire créé avec succès",
+    "deleted_success": "Glossaire supprimé avec succès",
+    "entry_saved": "Entrée enregistrée avec succès",
+    "select_glossary": "Sélectionnez un glossaire pour voir les entrées",
+    "no_entries": "Aucune entrée trouvée"
+  },
+  "placeholders": {
+    "choose_glossary": "Choisir un glossaire...",
+    "search_entries": "Rechercher des entrées...",
+    "enter_source": "Entrer le texte source...",
+    "enter_target": "Entrer le texte cible..."
+  }
+}

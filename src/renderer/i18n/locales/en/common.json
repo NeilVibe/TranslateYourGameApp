@@ -1,0 +1,39 @@
+{
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "upload": "Upload",
+    "download": "Download",
+    "translate": "Translate",
+    "create": "Create",
+    "update": "Update",
+    "close": "Close",
+    "ok": "OK"
+  },
+  "status": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "processing": "Processing...",
+    "completed": "Completed",
+    "failed": "Failed",
+    "success": "Success",
+    "error": "Error"
+  },
+  "languages": {
+    "english": "English",
+    "korean": "Korean", 
+    "french": "French",
+    "auto_detect": "Auto-detect",
+    "source_language": "Source Language",
+    "target_language": "Target Language"
+  },
+  "tokens": {
+    "balance": "Token Balance",
+    "used": "tokens used",
+    "remaining": "tokens remaining"
+  },
+  "navigation": {
+    "website": "Website"
+  }
+}

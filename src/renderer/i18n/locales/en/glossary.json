@@ -1,0 +1,42 @@
+{
+  "table": {
+    "source_text": "Source Text", 
+    "target_text": "Target Text",
+    "click_to_edit": "Click text to edit inline"
+  },
+  "upload": {
+    "title": "Uploading Glossary",
+    "button": "Upload Glossary",
+    "drag_text": "Drag files here",
+    "browse_text": "Browse"
+  },
+  "actions": {
+    "create": "Create Glossary",
+    "edit": "Edit",
+    "delete": "Delete", 
+    "save": "Save",
+    "cancel": "Cancel",
+    "add_entry": "Add Entry",
+    "export": "Export",
+    "import": "Import"
+  },
+  "forms": {
+    "name_label": "Glossary Name",
+    "description_label": "Description",
+    "source_label": "Source Text",
+    "target_label": "Target Text"
+  },
+  "messages": {
+    "created_success": "Glossary created successfully",
+    "deleted_success": "Glossary deleted successfully",
+    "entry_saved": "Entry saved successfully",
+    "select_glossary": "Select a glossary to view entries",
+    "no_entries": "No entries found"
+  },
+  "placeholders": {
+    "choose_glossary": "Choose a glossary...",
+    "search_entries": "Search glossary entries...",
+    "enter_source": "Enter source text...",
+    "enter_target": "Enter target text..."
+  }
+}

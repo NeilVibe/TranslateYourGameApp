@@ -1,0 +1,136 @@
+{
+  "title": "Traduction de fichier",
+  "description": "Traduction alimentée par IA avec gestion de glossaire pour la localisation de jeux",
+  "upload": {
+    "title": "Télécharger le fichier de traduction",
+    "description": "Sélectionnez un fichier à traduire (formats Excel, CSV, TXT pris en charge)",
+    "button": "Télécharger le fichier",
+    "drag_text": "Glissez et déposez votre fichier ici",
+    "or_text": "ou",
+    "browse_text": "parcourir pour télécharger"
+  },
+  "progress": {
+    "initializing": "Initialisation",
+    "parsing": "Analyse du fichier", 
+    "building_glossary": "Construction du glossaire",
+    "translating": "Traduction en cours",
+    "complete": "Terminé"
+  },
+  "language_selection": {
+    "source_placeholder": "Sélectionner la source",
+    "target_placeholder": "Sélectionner la cible"
+  },
+  "translation_modes": {
+    "simple": "Simple",
+    "smart": "Intelligent"
+  },
+  "view_modes": {
+    "editor": "Éditeur",
+    "review": "Révision"
+  },
+  "segments": {
+    "empty_description": "Sélectionnez un segment pour commencer la traduction",
+    "search_placeholder": "Rechercher des segments...",
+    "total": "Total des segments",
+    "translated": "Traduit",
+    "remaining": "Restant"
+  },
+  "actions": {
+    "start_translation": "Commencer la traduction",
+    "download_result": "Télécharger le résultat",
+    "save_changes": "Enregistrer les modifications",
+    "preview": "Aperçu",
+    "save_progress": "Sauvegarder le progrès"
+  },
+  "file_formats": {
+    "json": "JSON",
+    "excel": "Excel", 
+    "xml": "XML",
+    "po": "PO/POT",
+    "csv": "CSV"
+  },
+  "labels": {
+    "file": "Fichier",
+    "drop_title": "Déposez votre fichier ici ou cliquez pour parcourir",
+    "support_formats": "Support pour JSON, XML, XLSX, CSV, PO et plus",
+    "choose_file": "Choisir un fichier",
+    "translation_settings": "Paramètres de traduction",
+    "source_language": "Langue source",
+    "target_language": "Langue cible",
+    "translation_mode": "Mode de traduction",
+    "project_overview": "Aperçu du projet",
+    "file_details": "Détails du fichier",
+    "content_analysis": "Analyse du contenu",
+    "processing_estimates": "Estimations de traitement",
+    "name": "Nom",
+    "format": "Format",
+    "size": "Taille",
+    "total_segments": "Total des segments",
+    "word_count": "Nombre de mots",
+    "character_count": "Nombre de caractères",
+    "lines_of_text": "Lignes de texte",
+    "estimated_time": "Temps estimé",
+    "token_estimate": "Estimation de token",
+    "use_existing_glossaries": "Utiliser les glossaires existants",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "simple_translation": "Traduction simple",
+    "smart_translation": "Traduction intelligente",
+    "clear": "Effacer",
+    "cancel_translation": "Annuler la traduction"
+  },
+  "descriptions": {
+    "simple_mode": "⚡ Traitement par lots rapide (100 entrées/lot, 12 workers) avec support optionnel de glossaire",
+    "smart_mode": "🧠 Génération intelligente de glossaire dynamique + traduction avec filtrage de candidats et embeddings de ligne"
+  },
+  "messages": {
+    "file_parsed": "Fichier analysé avec succès",
+    "found_entries": "{{count}} entrées trouvées. Prêt à configurer les paramètres de traduction.",
+    "upload_failed": "Échec du téléchargement de fichier", 
+    "no_file": "Aucun fichier téléchargé",
+    "upload_first": "Veuillez d'abord télécharger un fichier avant de commencer la traduction.",
+    "translation_started": "Traduction commencée",
+    "creating_task": "Création d'une nouvelle tâche de traduction avec les paramètres actuels...",
+    "translation_start_failed": "Échec du démarrage de la traduction",
+    "translation_complete": "Traduction terminée",
+    "successfully_translated": "{{count}} segments traduits avec succès.",
+    "translation_failed": "Échec de la traduction",
+    "export_not_available": "Export non disponible",
+    "no_translation_task": "Aucune tâche de traduction trouvée. Veuillez d'abord traduire un fichier.",
+    "export_error": "Erreur d'export",
+    "task_id_missing": "ID de tâche manquant. Impossible de télécharger le fichier.",
+    "translation_not_complete": "Traduction non terminée (statut: {{status}}). Veuillez attendre la fin.",
+    "preparing_download": "Préparation du téléchargement",
+    "generating_file": "Génération de votre fichier traduit...",
+    "file_downloaded": "Fichier téléchargé",
+    "successfully_downloaded": "{{filename}} téléchargé avec succès",
+    "export_failed": "Échec de l'export",
+    "translation_cancelled": "Traduction annulée",
+    "task_cancelled": "La tâche de traduction a été annulée."
+  },
+  "placeholders": {
+    "search_segments": "Rechercher des segments...",
+    "enter_translation": "Entrer la traduction..."
+  },
+  "buttons": {
+    "save_next": "Sauvegarder et suivant",
+    "skip": "Ignorer",
+    "apply_tm": "Appliquer TM",
+    "export": "Exporter",
+    "review_translations": "Réviser les traductions",
+    "download_translated_file": "Télécharger le fichier traduit"
+  },
+  "stats": {
+    "segments_translated": "Segments traduits",
+    "original_format": "Format original",
+    "processing_time": "Temps de traitement",
+    "items_processed": "Éléments traités",
+    "items_per_sec": "Éléments/sec",
+    "time_remaining": "Temps restant",
+    "current_phase": "Phase actuelle",
+    "fast": "Rapide",
+    "initializing": "Initialisation",
+    "elapsed": "écoulé",
+    "starting": "Démarrage"
+  }
+}

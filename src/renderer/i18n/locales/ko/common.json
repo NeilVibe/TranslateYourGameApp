@@ -1,0 +1,39 @@
+{
+  "buttons": {
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "upload": "업로드",
+    "download": "다운로드",
+    "translate": "번역",
+    "create": "생성",
+    "update": "업데이트",
+    "close": "닫기",
+    "ok": "확인"
+  },
+  "status": {
+    "loading": "로딩 중...",
+    "saving": "저장 중...",
+    "processing": "처리 중...",
+    "completed": "완료",
+    "failed": "실패",
+    "success": "성공",
+    "error": "오류"
+  },
+  "languages": {
+    "english": "영어",
+    "korean": "한국어", 
+    "french": "프랑스어",
+    "auto_detect": "자동 감지",
+    "source_language": "원본 언어",
+    "target_language": "대상 언어"
+  },
+  "tokens": {
+    "balance": "토큰 잔액",
+    "used": "토큰 사용됨",
+    "remaining": "토큰 남음"
+  },
+  "navigation": {
+    "website": "웹사이트"
+  }
+}

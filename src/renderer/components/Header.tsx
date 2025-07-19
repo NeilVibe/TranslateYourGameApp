@@ -1,6 +1,7 @@
 import React from 'react';
 import { Layout, Button, Typography, Space, Badge, Menu } from 'antd';
 import { SettingOutlined, GlobalOutlined, MessageOutlined, FileTextOutlined, BookOutlined, ThunderboltOutlined, ApiOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 const { Header: AntHeader } = Layout;
 const { Title, Text } = Typography;
@@ -20,21 +21,23 @@ const Header: React.FC<HeaderProps> = ({
   currentTab,
   onTabChange
 }) => {
+  const { t } = useTranslation(['header', 'common']);
+  
   const menuItems = [
     {
       key: 'chatbot',
       icon: <MessageOutlined />,
-      label: 'Chatbot'
+      label: t('header:tabs.chatbot')
     },
     {
       key: 'file-translation',
       icon: <FileTextOutlined />,
-      label: 'File Translation'
+      label: t('header:tabs.file_translation')
     },
     {
       key: 'glossaries',
       icon: <BookOutlined />,
-      label: 'Glossaries'
+      label: t('header:tabs.glossaries')
     }
   ];
 
@@ -71,7 +74,7 @@ const Header: React.FC<HeaderProps> = ({
       <Space size="large">
         {tokenBalance !== null && (
           <Badge count={tokenBalance} showZero style={{ backgroundColor: '#8b5cf6' }}>
-            <Text strong style={{ color: '#e2e8f0' }}>Tokens</Text>
+            <Text strong style={{ color: '#e2e8f0' }}>{t('common:tokens.balance')}</Text>
           </Badge>
         )}
         
@@ -80,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({
           onClick={onWebsiteClick}
           type="text"
         >
-          Website
+          {t('common:navigation.website')}
         </Button>
         
         <Button 
@@ -88,7 +91,7 @@ const Header: React.FC<HeaderProps> = ({
           onClick={onSettingsClick}
           type="text"
         >
-          Settings
+          {t('header:settings')}
         </Button>
       </Space>
     </AntHeader>

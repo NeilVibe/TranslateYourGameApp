@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input, Button, Space, Typography, message, Select, Divider } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { SendOutlined, CopyOutlined, SwapOutlined, DeleteOutlined, LoadingOutlined } from '@ant-design/icons';
 import apiClient from '../services/apiClient';
 
@@ -42,6 +43,7 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
   onTargetLanguageChange,
   apiKey
 }) => {
+  const { t } = useTranslation(['chatbot', 'common']);
   const [inputText, setInputText] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
   const [exchanges, setExchanges] = useState<TranslationExchange[]>([]);
@@ -203,7 +205,7 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
 
           <Select
             mode="multiple"
-            placeholder="Select glossaries..."
+            placeholder={t('chatbot:glossary_placeholder')}
             value={selectedGlossaries}
             onChange={onSelectedGlossariesChange}
             style={{ 
@@ -386,7 +388,7 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Enter text to translate..."
+            placeholder={t('chatbot:input_placeholder')}
             style={{
               background: '#1a1a1a',
               border: '1px solid #333',

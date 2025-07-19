@@ -1,0 +1,11 @@
+{
+  "glossary_placeholder": "글로서리 선택...",
+  "input_placeholder": "번역할 텍스트를 입력하세요...",
+  "translate_button": "번역",
+  "clear_button": "지우기",
+  "copy_button": "복사",
+  "translating": "번역 중...",
+  "no_api_key": "API 키가 제공되지 않았습니다",
+  "translation_error": "번역에 실패했습니다",
+  "copied_success": "클립보드에 복사되었습니다"
+}

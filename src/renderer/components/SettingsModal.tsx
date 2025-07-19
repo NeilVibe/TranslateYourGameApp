@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Button, Typography, Space, Alert, Tabs, message } from 'antd';
-import { KeyOutlined, GlobalOutlined, UserOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, Button, Typography, Space, Alert, Tabs, message, Select } from 'antd';
+import { KeyOutlined, GlobalOutlined, UserOutlined, TranslationOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import apiClient from '../services/apiClient';
+import { SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n/types';
 
 const { Text, Paragraph, Title } = Typography;
 const { TabPane } = Tabs;
@@ -20,6 +22,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   onSave
 }) => {
+  const { t, i18n } = useTranslation(['settings', 'common']);
   const [apiForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('api');
@@ -49,12 +52,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     window.electronAPI.openExternal('https://translateyourgame.com/my-profile');
   };
 
+  const handleLanguageChange = async (language: SupportedLanguage) => {
+    try {
+      await i18n.changeLanguage(language);
+      message.success(t('settings:language.change_success'));
+    } catch (error) {
+      message.error(t('settings:language.change_error'));
+    }
+  };
+
   return (
     <Modal
       title={
         <Space>
           <UserOutlined />
-          Settings
+          {t('settings:title')}
         </Space>
       }
       open={visible}
@@ -67,17 +79,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           tab={
             <Space>
               <KeyOutlined />
-              API Key
+              {t('settings:tabs.api_key')}
             </Space>
           } 
           key="api"
         >
           <div style={{ padding: '16px 0' }}>
             <Alert
-              message={apiKey ? "API Key Settings" : "API Key Required"}
+              message={apiKey ? t('settings:api_key.alert_title_set') : t('settings:api_key.alert_title_required')}
               description={apiKey ? 
-                "Your API key is saved securely. You can update it below if needed." :
-                "You need an API key to use this desktop app. Get one from your Translate Your Game account."
+                t('settings:api_key.alert_desc_set') :
+                t('settings:api_key.alert_desc_required')
               }
               type={apiKey ? "success" : "info"}
               showIcon
@@ -91,15 +103,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               initialValues={{ apiKey }}
             >
               <Form.Item
-                label="API Key"
+                label={t('settings:api_key.label')}
                 name="apiKey"
                 rules={[
-                  { required: true, message: 'Please enter your API key' },
-                  { pattern: /^tk_live_/, message: 'API key must start with tk_live_' }
+                  { required: true, message: t('settings:api_key.validation_required') },
+                  { pattern: /^tk_live_/, message: t('settings:api_key.validation_format') }
                 ]}
               >
                 <Input.Password
-                  placeholder="tk_live_..."
+                  placeholder={t('settings:api_key.placeholder')}
                   size="large"
                   prefix={<KeyOutlined />}
                 />
@@ -108,7 +120,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <Space direction="vertical" size={16} style={{ width: '100%' }}>
                 <div>
                   <Paragraph type="secondary">
-                    Don't have an API key yet?
+                    {t('settings:api_key.no_key_text')}
                   </Paragraph>
                   <Button 
                     icon={<GlobalOutlined />}
@@ -116,31 +128,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     type="link"
                     style={{ padding: 0 }}
                   >
-                    Get API Key from Website
+                    {t('settings:api_key.get_key_button')}
                   </Button>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                   <Button onClick={onClose}>
-                    Cancel
+                    {t('common:buttons.cancel')}
                   </Button>
                   <Button 
                     type="primary" 
                     htmlType="submit"
                     loading={loading}
                   >
-                    Save API Key
+                    {t('settings:api_key.save_button')}
                   </Button>
                 </div>
               </Space>
             </Form>
 
             <div style={{ marginTop: 24, padding: 16, backgroundColor: '#1f2937', borderRadius: 6 }}>
-              <Text strong style={{ color: '#10b981' }}>Security & Storage:</Text>
+              <Text strong style={{ color: '#10b981' }}>{t('settings:api_key.security_title')}</Text>
               <Paragraph style={{ margin: '8px 0 0 0', fontSize: 13, color: '#e5e7eb' }}>
-                • Your API key is automatically saved and encrypted locally on your device<br/>
-                • Never shared with third parties - used only for Translate Your Game API<br/>
-                • You only need to enter it once - it will be remembered for future sessions
+                {t('settings:api_key.security_desc')}
               </Paragraph>
             </div>
           </div>
@@ -150,16 +160,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           tab={
             <Space>
               <UserOutlined />
-              My Profile
+              {t('settings:tabs.profile')}
             </Space>
           } 
           key="profile"
         >
           <div style={{ padding: '16px 0' }}>
             <div style={{ textAlign: 'center', padding: 40 }}>
-              <Title level={3}>Manage Your Profile</Title>
+              <Title level={3}>{t('settings:profile.title')}</Title>
               <Paragraph style={{ marginBottom: 24, fontSize: 15, color: '#8c8c8c' }}>
-                Access your profile, billing, usage statistics, and account settings on the web dashboard.
+                {t('settings:profile.description')}
               </Paragraph>
               
               <Button 
@@ -174,7 +184,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   paddingRight: 24
                 }}
               >
-                Open My Profile
+                {t('settings:profile.open_button')}
               </Button>
               
               <div style={{ 
@@ -184,19 +194,73 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 borderRadius: 8, 
                 border: '1px solid #8b5cf6' 
               }}>
-                <Text strong style={{ color: '#a855f7', fontSize: 14 }}>Available on Web Profile:</Text>
+                <Text strong style={{ color: '#a855f7', fontSize: 14 }}>{t('settings:profile.web_features_title')}</Text>
                 <Paragraph style={{ 
                   margin: '10px 0 0 0', 
                   fontSize: 13, 
                   color: '#e5e7eb',
                   lineHeight: 1.6
                 }}>
-                  • Update profile information & password<br/>
-                  • View detailed usage statistics & billing<br/>
-                  • Manage API keys & subscription<br/>
-                  • Download invoices & usage reports
+                  {t('settings:profile.web_features_desc')}
                 </Paragraph>
               </div>
+            </div>
+          </div>
+        </TabPane>
+
+        <TabPane 
+          tab={
+            <Space>
+              <TranslationOutlined />
+              {t('settings:tabs.language')}
+            </Space>
+          } 
+          key="language"
+        >
+          <div style={{ padding: '16px 0' }}>
+            <Alert
+              message={t('settings:language.title')}
+              description={t('settings:language.ui_language_description')}
+              type="info"
+              showIcon
+              style={{ marginBottom: 24 }}
+            />
+
+            <div style={{ marginBottom: 24 }}>
+              <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                {t('settings:language.ui_language')}
+              </Text>
+              <Select
+                value={i18n.language as SupportedLanguage}
+                onChange={handleLanguageChange}
+                size="large"
+                style={{ width: '100%', maxWidth: 300 }}
+                options={Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => ({
+                  value: code,
+                  label: (
+                    <Space>
+                      <TranslationOutlined />
+                      {name}
+                    </Space>
+                  ),
+                }))}
+              />
+            </div>
+
+            <div style={{ 
+              marginTop: 24, 
+              padding: 16, 
+              backgroundColor: '#1f2937', 
+              borderRadius: 6 
+            }}>
+              <Text strong style={{ color: '#10b981' }}>{t('settings:language.settings_title')}</Text>
+              <Paragraph style={{ 
+                margin: '8px 0 0 0', 
+                fontSize: 13, 
+                color: '#e5e7eb' 
+              }}>
+                {t('settings:language.settings_desc')}
+              </Paragraph>
             </div>
           </div>
         </TabPane>

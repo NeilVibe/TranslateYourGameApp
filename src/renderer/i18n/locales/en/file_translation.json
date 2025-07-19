@@ -1,0 +1,136 @@
+{
+  "title": "File Translation",
+  "description": "AI-powered translation with glossary management for game localization",
+  "upload": {
+    "title": "Upload Translation File",
+    "description": "Select a file to translate (Excel, CSV, TXT formats supported)",
+    "button": "Upload File",
+    "drag_text": "Drag and drop your file here",
+    "or_text": "or",
+    "browse_text": "browse to upload"
+  },
+  "progress": {
+    "initializing": "Initializing",
+    "parsing": "Parsing file", 
+    "building_glossary": "Building glossary",
+    "translating": "Translating",
+    "complete": "Complete"
+  },
+  "language_selection": {
+    "source_placeholder": "Select source",
+    "target_placeholder": "Select target"
+  },
+  "translation_modes": {
+    "simple": "Simple",
+    "smart": "Smart"
+  },
+  "view_modes": {
+    "editor": "Editor",
+    "review": "Review"
+  },
+  "segments": {
+    "empty_description": "Select a segment to start translating",
+    "search_placeholder": "Search segments...",
+    "total": "Total segments",
+    "translated": "Translated",
+    "remaining": "Remaining"
+  },
+  "actions": {
+    "start_translation": "Start Translation",
+    "download_result": "Download Result",
+    "save_changes": "Save Changes",
+    "preview": "Preview",
+    "save_progress": "Save Progress"
+  },
+  "file_formats": {
+    "json": "JSON",
+    "excel": "Excel", 
+    "xml": "XML",
+    "po": "PO/POT",
+    "csv": "CSV"
+  },
+  "labels": {
+    "file": "File",
+    "drop_title": "Drop your file here or click to browse",
+    "support_formats": "Support for JSON, XML, XLSX, CSV, PO and more",
+    "choose_file": "Choose File",
+    "translation_settings": "Translation Settings",
+    "source_language": "Source Language",
+    "target_language": "Target Language",
+    "translation_mode": "Translation Mode",
+    "project_overview": "Project Overview",
+    "file_details": "File Details",
+    "content_analysis": "Content Analysis",
+    "processing_estimates": "Processing Estimates",
+    "name": "Name",
+    "format": "Format",
+    "size": "Size",
+    "total_segments": "Total Segments",
+    "word_count": "Word Count",
+    "character_count": "Character Count",
+    "lines_of_text": "Lines of Text",
+    "estimated_time": "Estimated Time",
+    "token_estimate": "Token Estimate",
+    "use_existing_glossaries": "Use Existing Glossaries",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "simple_translation": "Simple Translation",
+    "smart_translation": "Smart Translation",
+    "clear": "Clear",
+    "cancel_translation": "Cancel Translation"
+  },
+  "descriptions": {
+    "simple_mode": "⚡ Fast batch processing (100 entries/batch, 12 workers) with optional glossary support",
+    "smart_mode": "🧠 Intelligent dynamic glossary generation + translation with candidate filtering and line embeddings"
+  },
+  "messages": {
+    "file_parsed": "File Parsed Successfully",
+    "found_entries": "Found {{count}} entries. Ready to configure translation settings.",
+    "upload_failed": "File Upload Failed", 
+    "no_file": "No File Uploaded",
+    "upload_first": "Please upload a file first before starting translation.",
+    "translation_started": "Translation Started",
+    "creating_task": "Creating new translation task with current settings...",
+    "translation_start_failed": "Translation Start Failed",
+    "translation_complete": "Translation Complete",
+    "successfully_translated": "Successfully translated {{count}} segments.",
+    "translation_failed": "Translation Failed",
+    "export_not_available": "Export Not Available",
+    "no_translation_task": "No translation task found. Please translate a file first.",
+    "export_error": "Export Error",
+    "task_id_missing": "Task ID is missing. Cannot download file.",
+    "translation_not_complete": "Translation not complete (status: {{status}}). Please wait for completion.",
+    "preparing_download": "Preparing Download",
+    "generating_file": "Generating your translated file...",
+    "file_downloaded": "File Downloaded",
+    "successfully_downloaded": "Successfully downloaded {{filename}}",
+    "export_failed": "Export Failed",
+    "translation_cancelled": "Translation Cancelled",
+    "task_cancelled": "The translation task has been cancelled."
+  },
+  "placeholders": {
+    "search_segments": "Search segments...",
+    "enter_translation": "Enter translation..."
+  },
+  "buttons": {
+    "save_next": "Save & Next",
+    "skip": "Skip",
+    "apply_tm": "Apply TM",
+    "export": "Export",
+    "review_translations": "Review Translations",
+    "download_translated_file": "Download Translated File"
+  },
+  "stats": {
+    "segments_translated": "Segments Translated",
+    "original_format": "Original Format",
+    "processing_time": "Processing Time",
+    "items_processed": "Items Processed",
+    "items_per_sec": "Items/sec",
+    "time_remaining": "Time Remaining",
+    "current_phase": "Current Phase",
+    "fast": "Fast",
+    "initializing": "Initializing",
+    "elapsed": "elapsed",
+    "starting": "Starting"
+  }
+}

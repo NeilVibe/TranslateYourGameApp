@@ -1,0 +1,43 @@
+{
+  "title": "Settings",
+  "tabs": {
+    "api_key": "API Key",
+    "profile": "My Profile", 
+    "language": "🌐 Language"
+  },
+  "api_key": {
+    "title": "API Configuration",
+    "label": "API Key",
+    "placeholder": "tk_live_...",
+    "description": "Your API key for accessing translation services",
+    "save_success": "API key saved successfully",
+    "save_error": "Failed to save API key",
+    "alert_title_set": "API Key Settings",
+    "alert_title_required": "API Key Required",
+    "alert_desc_set": "Your API key is saved securely. You can update it below if needed.",
+    "alert_desc_required": "You need an API key to use this desktop app. Get one from your Translate Your Game account.",
+    "validation_required": "Please enter your API key",
+    "validation_format": "API key must start with tk_live_",
+    "no_key_text": "Don't have an API key yet?",
+    "get_key_button": "Get API Key from Website",
+    "save_button": "Save API Key",
+    "security_title": "Security & Storage:",
+    "security_desc": "• Your API key is automatically saved and encrypted locally on your device\n• Never shared with third parties - used only for Translate Your Game API\n• You only need to enter it once - it will be remembered for future sessions"
+  },
+  "profile": {
+    "title": "Manage Your Profile",
+    "description": "Access your profile, billing, usage statistics, and account settings on the web dashboard.",
+    "open_button": "Open My Profile",
+    "web_features_title": "Available on Web Profile:",
+    "web_features_desc": "• Update profile information & password\n• View detailed usage statistics & billing\n• Manage API keys & subscription\n• Download invoices & usage reports"
+  },
+  "language": {
+    "title": "Language Preferences",
+    "ui_language": "Interface Language",
+    "ui_language_description": "Choose your preferred language for the application interface",
+    "change_success": "Language changed successfully",
+    "change_error": "Failed to change language",
+    "settings_title": "Language Settings:",
+    "settings_desc": "• Language preference is saved automatically\n• All interface elements will update immediately\n• Translation workflow languages are set separately"
+  }
+}

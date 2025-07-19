@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Table, Button, Modal, Form, Input, Space, Typography, message, 
   Popconfirm, Select, Checkbox, Tag, Tooltip, Progress, Card,
@@ -41,6 +42,8 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   apiKey, 
   apiBaseUrl 
 }) => {
+  const { t } = useTranslation(['glossary', 'common']);
+  
   // State Management
   const [glossaries, setGlossaries] = useState<Glossary[]>([]);
   const [selectedGlossary, setSelectedGlossary] = useState<Glossary | null>(null);
@@ -64,10 +67,6 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   const [uploadTaskId, setUploadTaskId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
-  
-  // Glossary management state
-  const [createGlossaryModalVisible, setCreateGlossaryModalVisible] = useState(false);
-  const [createGlossaryForm] = Form.useForm();
 
   // Load data
   useEffect(() => {
@@ -441,53 +440,6 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     }
   };
 
-  // Glossary management functions
-  const handleCreateGlossary = async (values: { name: string; description: string }) => {
-    try {
-      const response = await fetch(`${apiBaseUrl}/glossaries`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': apiKey
-        },
-        body: JSON.stringify(values)
-      });
-      
-      if (!response.ok) throw new Error('Failed to create glossary');
-      
-      message.success('Glossary created successfully');
-      setCreateGlossaryModalVisible(false);
-      createGlossaryForm.resetFields();
-      await loadGlossaries();
-    } catch (error) {
-      console.error('Error creating glossary:', error);
-      message.error('Failed to create glossary');
-    }
-  };
-
-  const handleDeleteGlossary = async () => {
-    if (!selectedGlossary) return;
-    
-    try {
-      const response = await fetch(`${apiBaseUrl}/glossaries/${selectedGlossary.id}`, {
-        method: 'DELETE',
-        headers: {
-          'X-API-Key': apiKey
-        }
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete glossary');
-      
-      message.success('Glossary deleted successfully');
-      setSelectedGlossary(null);
-      setEntries([]);
-      await loadGlossaries();
-    } catch (error) {
-      console.error('Error deleting glossary:', error);
-      message.error('Failed to delete glossary');
-    }
-  };
-
   // Enhanced columns with inline editing
   const columns = [
     {
@@ -564,7 +516,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
           </Space>
         ) : (
           <Space>
-            <Tooltip title="Click text to edit inline">
+            <Tooltip title={t('glossary:table.click_to_edit')}>
               <Button 
                 type="text" 
                 icon={<EditOutlined />} 
@@ -596,18 +548,13 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
 
   return (
     <div style={{ padding: '24px', background: '#0f0f0f', minHeight: '100vh' }}>
-      <Title level={2} style={{ color: '#e2e8f0', marginBottom: '24px' }}>
-        Professional Glossary Management
-      </Title>
-      
       {/* Compact Glossary Selector */}
       <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-        <Text style={{ color: '#a0aec0', fontSize: '14px', minWidth: '100px' }}>Select Glossary:</Text>
         <Select
           value={selectedGlossary?.id}
           onChange={(id) => setSelectedGlossary(glossaries.find(g => g.id === id) || null)}
           style={{ minWidth: '300px', flex: 1, maxWidth: '500px' }}
-          placeholder="Choose a glossary..."
+          placeholder={t('glossary:placeholders.choose_glossary')}
         >
           {glossaries.map((glossary) => (
             <Option key={glossary.id} value={glossary.id}>
@@ -620,37 +567,6 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
             Total: {entries.length} entries
           </Text>
         )}
-        
-        {/* Glossary Management Buttons */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            size="small"
-            onClick={() => setCreateGlossaryModalVisible(true)}
-            style={{ background: '#8b5cf6', borderColor: '#8b5cf6' }}
-          >
-            New Glossary
-          </Button>
-          {selectedGlossary && (
-            <Popconfirm
-              title="Delete this glossary?"
-              description={`This will permanently delete "${selectedGlossary.name}" and all its ${selectedGlossary.entry_count} entries.`}
-              onConfirm={handleDeleteGlossary}
-              okText="Delete"
-              cancelText="Cancel"
-              okButtonProps={{ danger: true }}
-            >
-              <Button 
-                danger 
-                icon={<DeleteOutlined />}
-                size="small"
-              >
-                Delete Glossary
-              </Button>
-            </Popconfirm>
-          )}
-        </div>
       </div>
 
       {selectedGlossary && (
@@ -658,7 +574,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
           {/* Search and Controls */}
           <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
             <Input
-              placeholder="Search glossary entries..."
+              placeholder={t('glossary:placeholders.search_entries')}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               style={{ 
@@ -728,7 +644,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
             </div>
           )}
 
-          {/* Professional Data Table */}
+          {/* Data Table */}
           <Table
             columns={columns}
             dataSource={processedEntries}
@@ -762,24 +678,24 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
         >
           <Form.Item
             name="source_text"
-            label="Source Text"
+            label={t('glossary:table.source_text')}
             rules={[{ required: true, message: 'Please enter source text' }]}
           >
             <Input.TextArea 
               rows={4} 
-              placeholder="Enter source text..."
+              placeholder={t('glossary:placeholders.enter_source')}
               showCount
             />
           </Form.Item>
           
           <Form.Item
             name="target_text"
-            label="Target Text"
+            label={t('glossary:table.target_text')}
             rules={[{ required: true, message: 'Please enter target text' }]}
           >
             <Input.TextArea 
               rows={4} 
-              placeholder="Enter target text..."
+              placeholder={t('glossary:placeholders.enter_target')}
               showCount
             />
           </Form.Item>
@@ -817,7 +733,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
       
       {/* Upload Progress Modal */}
       <Modal
-        title="Uploading Glossary"
+        title={t('glossary:upload.title')}
         open={uploadModalVisible}
         footer={null}
         closable={!isUploading}
@@ -863,68 +779,6 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
             </>
           )}
         </div>
-      </Modal>
-      
-      {/* Create Glossary Modal */}
-      <Modal
-        title="Create New Glossary"
-        open={createGlossaryModalVisible}
-        onCancel={() => {
-          setCreateGlossaryModalVisible(false);
-          createGlossaryForm.resetFields();
-        }}
-        footer={null}
-        width={500}
-      >
-        <Form
-          form={createGlossaryForm}
-          layout="vertical"
-          onFinish={handleCreateGlossary}
-          style={{ marginTop: '20px' }}
-        >
-          <Form.Item
-            name="name"
-            label="Glossary Name"
-            rules={[
-              { required: true, message: 'Please enter a glossary name' },
-              { min: 2, message: 'Name must be at least 2 characters' },
-              { max: 100, message: 'Name must be less than 100 characters' }
-            ]}
-          >
-            <Input placeholder="Enter glossary name..." />
-          </Form.Item>
-          
-          <Form.Item
-            name="description"
-            label="Description"
-            rules={[
-              { max: 500, message: 'Description must be less than 500 characters' }
-            ]}
-          >
-            <Input.TextArea 
-              placeholder="Enter glossary description (optional)..."
-              rows={3}
-            />
-          </Form.Item>
-          
-          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
-            <Space>
-              <Button onClick={() => {
-                setCreateGlossaryModalVisible(false);
-                createGlossaryForm.resetFields();
-              }}>
-                Cancel
-              </Button>
-              <Button 
-                type="primary" 
-                htmlType="submit"
-                style={{ background: '#8b5cf6', borderColor: '#8b5cf6' }}
-              >
-                Create Glossary
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
       </Modal>
     </div>
   );

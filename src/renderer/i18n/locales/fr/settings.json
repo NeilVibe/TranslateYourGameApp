@@ -1,0 +1,43 @@
+{
+  "title": "Paramètres",
+  "tabs": {
+    "api_key": "Clé API",
+    "profile": "Mon profil", 
+    "language": "🌐 Langue"
+  },
+  "api_key": {
+    "title": "Configuration API",
+    "label": "Clé API",
+    "placeholder": "tk_live_...",
+    "description": "Votre clé API pour accéder aux services de traduction",
+    "save_success": "Clé API enregistrée avec succès",
+    "save_error": "Échec de l'enregistrement de la clé API",
+    "alert_title_set": "Paramètres de clé API",
+    "alert_title_required": "Clé API requise",
+    "alert_desc_set": "Votre clé API est enregistrée en toute sécurité. Vous pouvez la mettre à jour ci-dessous si nécessaire.",
+    "alert_desc_required": "Vous avez besoin d'une clé API pour utiliser cette application de bureau. Obtenez-en une depuis votre compte Translate Your Game.",
+    "validation_required": "Veuillez entrer votre clé API",
+    "validation_format": "La clé API doit commencer par tk_live_",
+    "no_key_text": "Vous n'avez pas encore de clé API ?",
+    "get_key_button": "Obtenir la clé API du site web",
+    "save_button": "Enregistrer la clé API",
+    "security_title": "Sécurité et stockage :",
+    "security_desc": "• Votre clé API est automatiquement enregistrée et chiffrée localement sur votre appareil\n• Jamais partagée avec des tiers - utilisée uniquement pour l'API Translate Your Game\n• Vous n'avez besoin de la saisir qu'une seule fois - elle sera mémorisée pour les sessions futures"
+  },
+  "profile": {
+    "title": "Gérer votre profil",
+    "description": "Accédez à votre profil, facturation, statistiques d'utilisation et paramètres de compte sur le tableau de bord web.",
+    "open_button": "Ouvrir mon profil",
+    "web_features_title": "Disponible sur le profil web :",
+    "web_features_desc": "• Mettre à jour les informations de profil et le mot de passe\n• Voir les statistiques d'utilisation détaillées et la facturation\n• Gérer les clés API et l'abonnement\n• Télécharger les factures et rapports d'utilisation"
+  },
+  "language": {
+    "title": "Préférences linguistiques",
+    "ui_language": "Langue de l'interface",
+    "ui_language_description": "Choisissez votre langue préférée pour l'interface de l'application",
+    "change_success": "Langue changée avec succès",
+    "change_error": "Échec du changement de langue",
+    "settings_title": "Paramètres de langue :",
+    "settings_desc": "• La préférence de langue est enregistrée automatiquement\n• Tous les éléments de l'interface se mettront à jour immédiatement\n• Les langues de flux de traduction sont définies séparément"
+  }
+}

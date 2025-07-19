@@ -1,0 +1,136 @@
+{
+  "title": "파일 번역",
+  "description": "게임 현지화를 위한 글로서리 관리 기능이 포함된 AI 기반 번역",
+  "upload": {
+    "title": "번역 파일 업로드",
+    "description": "번역할 파일을 선택하세요 (Excel, CSV, TXT 형식 지원)",
+    "button": "파일 업로드",
+    "drag_text": "파일을 여기에 끌어다 놓으세요",
+    "or_text": "또는",
+    "browse_text": "파일 찾기"
+  },
+  "progress": {
+    "initializing": "초기화 중",
+    "parsing": "파일 분석 중", 
+    "building_glossary": "글로서리 구성 중",
+    "translating": "번역 중",
+    "complete": "완료"
+  },
+  "language_selection": {
+    "source_placeholder": "원본 언어 선택",
+    "target_placeholder": "대상 언어 선택"
+  },
+  "translation_modes": {
+    "simple": "단순",
+    "smart": "스마트"
+  },
+  "view_modes": {
+    "editor": "편집기",
+    "review": "검토"
+  },
+  "segments": {
+    "empty_description": "번역을 시작할 세그먼트를 선택하세요",
+    "search_placeholder": "세그먼트 검색...",
+    "total": "전체 세그먼트",
+    "translated": "번역됨",
+    "remaining": "남은 항목"
+  },
+  "actions": {
+    "start_translation": "번역 시작",
+    "download_result": "결과 다운로드",
+    "save_changes": "변경사항 저장",
+    "preview": "미리보기",
+    "save_progress": "진행상황 저장"
+  },
+  "file_formats": {
+    "json": "JSON",
+    "excel": "Excel", 
+    "xml": "XML",
+    "po": "PO/POT",
+    "csv": "CSV"
+  },
+  "labels": {
+    "file": "파일",
+    "drop_title": "파일을 여기에 끌어다 놓거나 클릭하여 찾아보세요",
+    "support_formats": "JSON, XML, XLSX, CSV, PO 등 형식 지원",
+    "choose_file": "파일 선택",
+    "translation_settings": "번역 설정",
+    "source_language": "원본 언어",
+    "target_language": "대상 언어", 
+    "translation_mode": "번역 모드",
+    "project_overview": "프로젝트 개요",
+    "file_details": "파일 세부정보",
+    "content_analysis": "콘텐츠 분석",
+    "processing_estimates": "처리 예상시간",
+    "name": "이름",
+    "format": "형식",
+    "size": "크기",
+    "total_segments": "전체 세그먼트",
+    "word_count": "단어 수",
+    "character_count": "문자 수",
+    "lines_of_text": "텍스트 줄 수",
+    "estimated_time": "예상 시간",
+    "token_estimate": "토큰 예상량",
+    "use_existing_glossaries": "기존 글로서리 사용",
+    "enabled": "활성화",
+    "disabled": "비활성화",
+    "simple_translation": "단순 번역",
+    "smart_translation": "스마트 번역",
+    "clear": "지우기",
+    "cancel_translation": "번역 취소"
+  },
+  "descriptions": {
+    "simple_mode": "⚡ 빠른 배치 처리 (100개 항목/배치, 12개 워커) 및 선택적 글로서리 지원",
+    "smart_mode": "🧠 지능형 동적 글로서리 생성 + 후보 필터링 및 라인 임베딩을 통한 번역"
+  },
+  "messages": {
+    "file_parsed": "파일 분석 성공",
+    "found_entries": "{{count}}개 항목을 찾았습니다. 번역 설정을 구성할 준비가 되었습니다.",
+    "upload_failed": "파일 업로드 실패", 
+    "no_file": "업로드된 파일 없음",
+    "upload_first": "번역을 시작하기 전에 먼저 파일을 업로드하세요.",
+    "translation_started": "번역 시작됨",
+    "creating_task": "현재 설정으로 새 번역 작업을 생성 중...",
+    "translation_start_failed": "번역 시작 실패",
+    "translation_complete": "번역 완료",
+    "successfully_translated": "{{count}}개 세그먼트를 성공적으로 번역했습니다.",
+    "translation_failed": "번역 실패",
+    "export_not_available": "내보내기 불가능",
+    "no_translation_task": "번역 작업이 없습니다. 먼저 파일을 번역하세요.",
+    "export_error": "내보내기 오류",
+    "task_id_missing": "작업 ID가 누락되었습니다. 파일을 다운로드할 수 없습니다.",
+    "translation_not_complete": "번역이 완료되지 않았습니다 (상태: {{status}}). 완료될 때까지 기다려주세요.",
+    "preparing_download": "다운로드 준비 중",
+    "generating_file": "번역된 파일을 생성 중...",
+    "file_downloaded": "파일 다운로드됨",
+    "successfully_downloaded": "{{filename}}을(를) 성공적으로 다운로드했습니다",
+    "export_failed": "내보내기 실패",
+    "translation_cancelled": "번역 취소됨",
+    "task_cancelled": "번역 작업이 취소되었습니다."
+  },
+  "placeholders": {
+    "search_segments": "세그먼트 검색...",
+    "enter_translation": "번역 입력..."
+  },
+  "buttons": {
+    "save_next": "저장 후 다음",
+    "skip": "건너뛰기",
+    "apply_tm": "TM 적용",
+    "export": "내보내기",
+    "review_translations": "번역 검토",
+    "download_translated_file": "번역된 파일 다운로드"
+  },
+  "stats": {
+    "segments_translated": "번역된 세그먼트",
+    "original_format": "원본 형식",
+    "processing_time": "처리 시간",
+    "items_processed": "처리된 항목",
+    "items_per_sec": "항목/초",
+    "time_remaining": "남은 시간",
+    "current_phase": "현재 단계",
+    "fast": "빠름",
+    "initializing": "초기화 중",
+    "elapsed": "경과",
+    "starting": "시작 중"
+  }
+}

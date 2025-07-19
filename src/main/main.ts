@@ -36,10 +36,9 @@ function createWindow() {
     frame: true // Keep window frame but no menu
   });
 
-  // Show window when ready and maximize by default
+  // Show window when ready
   mainWindow.once('ready-to-show', () => {
     if (mainWindow) {
-      mainWindow.maximize(); // Make app full screen by default
       mainWindow.show();
     }
   });

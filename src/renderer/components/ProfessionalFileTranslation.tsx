@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Button, 
   Typography, 
@@ -70,6 +71,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
   onTargetLanguageChange,
   apiKey
 }) => {
+  const { t } = useTranslation(['file_translation', 'common']);
   const [fileInfo, setFileInfo] = useState<any>(null);
   const [segments, setSegments] = useState<TranslationSegment[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('editor');
@@ -153,8 +155,8 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
           setCurrentTask({ task_id: taskId, status: 'parsed', progress: 0 });
           
           notification.success({
-            message: 'File Parsed Successfully',
-            description: `Found ${response.data.entries_found} entries. Ready to configure translation settings.`,
+            message: t('file_translation:messages.file_parsed'),
+            description: t('file_translation:messages.found_entries', { count: response.data.entries_found }),
             duration: 4
           });
           
@@ -165,7 +167,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
       } catch (error: any) {
         console.error('❌ FILE UPLOAD ERROR:', error);
         notification.error({
-          message: 'File Upload Failed',
+          message: t('file_translation:messages.upload_failed'),
           description: error.message || 'Failed to upload and process file',
           duration: 6
         });
@@ -183,8 +185,8 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
   const handleStartTranslation = async () => {
     if (!fileInfo || !apiKey) {
       notification.warning({
-        message: 'No File Uploaded',
-        description: 'Please upload a file first before starting translation.',
+        message: t('file_translation:messages.no_file'),
+        description: t('file_translation:messages.upload_first'),
         duration: 4
       });
       return;
@@ -192,8 +194,8 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
     
     setIsTranslating(true);
     notification.info({
-      message: 'Translation Started',
-      description: 'Creating new translation task with current settings...',
+      message: t('file_translation:messages.translation_started'),
+      description: t('file_translation:messages.creating_task'),
       duration: 3
     });
     
@@ -221,7 +223,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
       console.error('❌ TRANSLATION START ERROR:', error);
       setIsTranslating(false);
       notification.error({
-        message: 'Translation Start Failed',
+        message: t('file_translation:messages.translation_start_failed'),
         description: error.message || 'Failed to create translation task',
         duration: 6
       });
@@ -261,8 +263,8 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
         if (taskStatus.status === 'completed') {
           setIsTranslating(false);
           notification.success({
-            message: 'Translation Complete',
-            description: `Successfully translated ${taskStatus.items_completed || 0} segments.`,
+            message: t('file_translation:messages.translation_complete'),
+            description: t('file_translation:messages.successfully_translated', { count: taskStatus.items_completed || 0 }),
             duration: 4
           });
           
@@ -288,7 +290,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
         } else if (taskStatus.status === 'failed') {
           setIsTranslating(false);
           notification.error({
-            message: 'Translation Failed',
+            message: t('file_translation:messages.translation_failed'),
             description: taskStatus.error_message || 'Translation task failed.',
             duration: 6
           });
@@ -302,7 +304,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
       console.error('❌ TASK POLLING ERROR:', error);
       setIsTranslating(false);
       notification.error({
-        message: 'Translation Error',
+        message: t('file_translation:messages.translation_failed'),
         description: 'Failed to check translation progress.',
         duration: 6
       });
@@ -322,8 +324,8 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
 
     if (!currentTask) {
       notification.warning({
-        message: 'Export Not Available',
-        description: 'No translation task found. Please translate a file first.',
+        message: t('file_translation:messages.export_not_available'),
+        description: t('file_translation:messages.no_translation_task'),
         duration: 4
       });
       return;
@@ -331,8 +333,8 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
 
     if (!currentTask.task_id) {
       notification.error({
-        message: 'Export Error',
-        description: 'Task ID is missing. Cannot download file.',
+        message: t('file_translation:messages.export_error'),
+        description: t('file_translation:messages.task_id_missing'),
         duration: 4
       });
       return;
@@ -340,8 +342,8 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
 
     if (currentTask.status !== 'completed') {
       notification.warning({
-        message: 'Export Not Available',
-        description: `Translation not complete (status: ${currentTask.status}). Please wait for completion.`,
+        message: t('file_translation:messages.export_not_available'),
+        description: t('file_translation:messages.translation_not_complete', { status: currentTask.status }),
         duration: 4
       });
       return;
@@ -349,8 +351,8 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
     
     try {
       notification.info({
-        message: 'Preparing Download',
-        description: 'Generating your translated file...',
+        message: t('file_translation:messages.preparing_download'),
+        description: t('file_translation:messages.generating_file'),
         duration: 2
       });
       
@@ -366,8 +368,8 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
       
       if (result.success) {
         notification.success({
-          message: 'File Downloaded',
-          description: `Successfully downloaded ${result.filename}`,
+          message: t('file_translation:messages.file_downloaded'),
+          description: t('file_translation:messages.successfully_downloaded', { filename: result.filename }),
           duration: 4
         });
       }
@@ -375,7 +377,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
     } catch (error: any) {
       console.error('❌ EXPORT ERROR:', error);
       notification.error({
-        message: 'Export Failed',
+        message: t('file_translation:messages.export_failed'),
         description: error.message || 'Failed to download translated file',
         duration: 6
       });
@@ -433,16 +435,16 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
   };
 
   const getCurrentPhaseStatus = (progress: number, mode: TranslationMode) => {
-    if (!progress || progress === 0) return "Initializing";
-    if (progress < 20) return "Parsing file";
+    if (!progress || progress === 0) return t('file_translation:progress.initializing');
+    if (progress < 20) return t('file_translation:progress.parsing');
     
     if (mode === 'smart') {
-      if (progress < 50) return "Building glossary";
-      if (progress < 90) return "Translating";
-      return "Complete";
+      if (progress < 50) return t('file_translation:progress.building_glossary');
+      if (progress < 90) return t('file_translation:progress.translating');
+      return t('file_translation:progress.complete');
     } else { // simple
-      if (progress < 90) return "Translating";
-      return "Complete";
+      if (progress < 90) return t('file_translation:progress.translating');
+      return t('file_translation:progress.complete');
     }
   };
 
@@ -476,9 +478,9 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
       >
         <div style={{ textAlign: 'center' }}>
           <CloudUploadOutlined style={{ fontSize: 64, color: '#8b5cf6', marginBottom: 24 }} />
-          <Title level={2} style={{ marginBottom: 16, fontSize: 26, fontWeight: 600, letterSpacing: '-0.3px' }}>Drop your file here or click to browse</Title>
+          <Title level={2} style={{ marginBottom: 16, fontSize: 26, fontWeight: 600, letterSpacing: '-0.3px' }}>{t('file_translation:labels.drop_title')}</Title>
           <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 28, fontWeight: 400 }}>
-            Support for JSON, XML, XLSX, CSV, PO and more
+            {t('file_translation:labels.support_formats')}
           </Text>
           <Space size="large">
             <Tag color="blue" style={{ padding: '4px 12px' }}>JSON</Tag>
@@ -489,7 +491,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
           </Space>
           <div style={{ marginTop: 32 }}>
             <Button type="primary" ghost size="large" icon={<CloudUploadOutlined />} style={{ fontWeight: 500 }}>
-              Choose File
+              {t('file_translation:labels.choose_file')}
             </Button>
           </div>
         </div>
@@ -510,7 +512,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
       }}>
         <Space size="large">
           <div>
-            <Text type="secondary" style={{ fontSize: 12 }}>File</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>{t('file_translation:labels.file')}</Text>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <FileTextOutlined style={{ color: '#8b5cf6' }} />
               <Text strong>{fileInfo?.name}</Text>
@@ -524,7 +526,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
           <Divider type="vertical" />
           
           <Search
-            placeholder="Search segments..."
+            placeholder={t('file_translation:placeholders.search_segments')}
             allowClear
             style={{ width: 300 }}
             prefix={<SearchOutlined />}
@@ -544,14 +546,14 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
             ]}
           />
           
-          <Button icon={<SaveOutlined />}>Save Progress</Button>
+          <Button icon={<SaveOutlined />}>{t('file_translation:actions.save_progress')}</Button>
           <Button 
             type="primary" 
             icon={<DownloadOutlined />}
             onClick={handleExportFile}
             disabled={!currentTask || currentTask.status !== 'completed'}
           >
-            Export
+            {t('file_translation:buttons.export')}
           </Button>
         </Space>
       </div>
@@ -624,7 +626,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                       </Text>
                       <Input.TextArea
                         rows={4}
-                        placeholder="Enter translation..."
+                        placeholder={t('file_translation:placeholders.enter_translation')}
                         value={segments.find(s => s.id === selectedSegment)?.target || ''}
                         style={{ fontSize: 16 }}
                       />
@@ -632,15 +634,15 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                     
                     <div style={{ marginTop: 24 }}>
                       <Space>
-                        <Button type="primary">Save & Next</Button>
-                        <Button>Skip</Button>
-                        <Button type="link">Apply TM</Button>
+                        <Button type="primary">{t('file_translation:buttons.save_next')}</Button>
+                        <Button>{t('file_translation:buttons.skip')}</Button>
+                        <Button type="link">{t('file_translation:buttons.apply_tm')}</Button>
                       </Space>
                     </div>
                   </div>
                 </div>
               ) : (
-                <Empty description="Select a segment to start translating" />
+                <Empty description={t('file_translation:segments.empty_description')} />
               )}
             </div>
           </div>
@@ -669,7 +671,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
           <Title level={2} style={{ marginBottom: 20, fontSize: 24, fontWeight: 600, letterSpacing: '-0.5px' }}>
             <Space>
               <GlobalOutlined style={{ color: '#8b5cf6' }} />
-              Translation Settings
+              {t('file_translation:labels.translation_settings')}
             </Space>  
           </Title>
           
@@ -677,24 +679,24 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
           <Row gutter={16} style={{ marginBottom: 24 }}>
             <Col span={12}>
               <div style={{ marginBottom: 8 }}>
-                <Text strong style={{ fontSize: 14, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Source Language</Text>
+                <Text strong style={{ fontSize: 14, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('file_translation:labels.source_language')}</Text>
               </div>
               <LanguageSelector
                 value={sourceLanguage}
                 onChange={onSourceLanguageChange}
                 languages={languages}
-                placeholder="Select source"
+                placeholder={t('file_translation:language_selection.source_placeholder')}
               />
             </Col>
             <Col span={12}>
               <div style={{ marginBottom: 8 }}>
-                <Text strong style={{ fontSize: 14, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Target Language</Text>
+                <Text strong style={{ fontSize: 14, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('file_translation:labels.target_language')}</Text>
               </div>
               <LanguageSelector
                 value={targetLanguage}
                 onChange={onTargetLanguageChange}
                 languages={languages}
-                placeholder="Select target"
+                placeholder={t('file_translation:language_selection.target_placeholder')}
               />
             </Col>
           </Row>
@@ -704,7 +706,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
             <Text strong style={{ display: 'block', marginBottom: 16, fontSize: 14, color: '#a0aec0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               <Space>
                 <RocketOutlined />
-                Translation Mode
+                {t('file_translation:labels.translation_mode')}
               </Space>
             </Text>
             
@@ -724,7 +726,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                   }}
                   icon={<ThunderboltOutlined />}
                 >
-                  Simple Translation
+                  {t('file_translation:labels.simple_translation')}
                 </Button>
                 <Button
                   size="large"
@@ -739,7 +741,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                   }}
                   icon={<BookOutlined />}
                 >
-                  Smart Translation
+                  {t('file_translation:labels.smart_translation')}
                 </Button>
               </div>
               
@@ -751,15 +753,15 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
               }}>
                 <Text style={{ fontSize: 13, color: '#6b7280' }}>
                   {translationMode === 'simple' 
-                    ? '⚡ Fast batch processing (100 entries/batch, 12 workers) with optional glossary support'
-                    : '🧠 Intelligent dynamic glossary generation + translation with candidate filtering and line embeddings'
+                    ? t('file_translation:descriptions.simple_mode')
+                    : t('file_translation:descriptions.smart_mode')
                   }
                 </Text>
               </Card>
               
               {/* Glossary Toggle */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text strong style={{ fontSize: 13 }}>Use Existing Glossaries</Text>
+                <Text strong style={{ fontSize: 13 }}>{t('file_translation:labels.use_existing_glossaries')}</Text>
                 <Button
                   size="small"
                   type={useGlossaries ? 'primary' : 'default'}
@@ -770,7 +772,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                     color: useGlossaries ? 'white' : '#8b5cf6'
                   }}
                 >
-                  {useGlossaries ? 'Enabled' : 'Disabled'}
+                  {useGlossaries ? t('file_translation:labels.enabled') : t('file_translation:labels.disabled')}
                 </Button>
               </div>
               
@@ -814,7 +816,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                 fontSize: 15
               }}
             >
-              Start Translation
+              {t('file_translation:actions.start_translation')}
             </Button>
           </div>
         </Card>
@@ -824,60 +826,60 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
         <div className="project-overview-compact" style={{ height: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
             <FileTextOutlined style={{ color: '#8b5cf6', fontSize: 20, marginRight: 12 }} />
-            <Title level={3} style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Project Overview</Title>
+            <Title level={3} style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{t('file_translation:labels.project_overview')}</Title>
           </div>
           
           {/* File Details */}
           <div className="project-overview-section">
-            <div className="section-title">File Details</div>
+            <div className="section-title">{t('file_translation:labels.file_details')}</div>
             
             <div className="stat-item">
-              <span className="stat-label">Name</span>
+              <span className="stat-label">{t('file_translation:labels.name')}</span>
               <span className="stat-value">{fileInfo?.name}</span>
             </div>
             
             <div className="stat-item">
-              <span className="stat-label">Format</span>
+              <span className="stat-label">{t('file_translation:labels.format')}</span>
               <Tag color="blue" style={{ marginLeft: 8 }}>{fileInfo?.format}</Tag>
             </div>
             
             <div className="stat-item">
-              <span className="stat-label">Size</span>
+              <span className="stat-label">{t('file_translation:labels.size')}</span>
               <span className="stat-value">{(fileInfo?.size / 1024).toFixed(1)} KB</span>
             </div>
           </div>
             
           {/* Content Statistics */}
           <div className="project-overview-section">
-            <div className="section-title">Content Analysis</div>
+            <div className="section-title">{t('file_translation:labels.content_analysis')}</div>
             
             <div className="stat-item">
-              <span className="stat-label">Total Segments</span>
+              <span className="stat-label">{t('file_translation:labels.total_segments')}</span>
               <span className="stat-value highlight">{fileInfo?.entries}</span>
             </div>
             
             <div className="stat-item">
-              <span className="stat-label">Word Count</span>
+              <span className="stat-label">{t('file_translation:labels.word_count')}</span>
               <span className="stat-value">{stats.words.toLocaleString()}</span>
             </div>
             
             <div className="stat-item">
-              <span className="stat-label">Character Count</span>
+              <span className="stat-label">{t('file_translation:labels.character_count')}</span>
               <span className="stat-value">{stats.characters.toLocaleString()}</span>
             </div>
             
             <div className="stat-item">
-              <span className="stat-label">Lines of Text</span>
+              <span className="stat-label">{t('file_translation:labels.lines_of_text')}</span>
               <span className="stat-value">{stats.lines}</span>
             </div>
           </div>
             
           {/* Processing Estimates */}
           <div className="project-overview-section">
-            <div className="section-title">Processing Estimates</div>
+            <div className="section-title">{t('file_translation:labels.processing_estimates')}</div>
             
             <div className="stat-item">
-              <span className="stat-label">Estimated Time</span>
+              <span className="stat-label">{t('file_translation:labels.estimated_time')}</span>
               <span className="stat-value">
                 <ClockCircleOutlined style={{ marginRight: 4, color: '#8b5cf6' }} />
                 ~{Math.max(2, Math.ceil(stats.words / 100))} min
@@ -885,7 +887,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
             </div>
             
             <div className="stat-item">
-              <span className="stat-label">Token Estimate</span>
+              <span className="stat-label">{t('file_translation:labels.token_estimate')}</span>
               <span className="stat-value">~{Math.ceil(stats.characters * 0.75)}</span>
             </div>
           </div>
@@ -901,9 +903,9 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
     return (
       <div className="file-translation-view" style={{ padding: '40px', height: 'calc(100vh - 80px)', overflow: 'hidden' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <Title level={1} style={{ fontSize: 32, marginBottom: 12, fontWeight: 600, letterSpacing: '-0.5px' }}>Professional File Translation</Title>
+          <Title level={1} style={{ fontSize: 32, marginBottom: 12, fontWeight: 600, letterSpacing: '-0.5px' }}>{t('file_translation:title')}</Title>
           <Text type="secondary" style={{ fontSize: 16, fontWeight: 400 }}>
-            AI-powered translation with glossary management for game localization
+            {t('file_translation:description')}
           </Text>
         </div>
         {renderFileUpload()}
@@ -915,7 +917,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
     return (
       <div className="file-translation-view" style={{ padding: '40px', maxWidth: 1000, margin: '0 auto' }}>
         <Card style={{ borderRadius: 12, overflow: 'hidden' }}>
-          {/* Professional Multi-Phase Header */}
+          {/* Multi-Phase Header */}
           <div style={{ 
             background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
             margin: '-24px -24px 24px -24px',
@@ -1100,7 +1102,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                     /{currentTask.total_items || fileInfo?.entries || 0}
                   </span>
                 </div>
-                <Text type="secondary" style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Items Processed</Text>
+                <Text type="secondary" style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t('file_translation:stats.items_processed')}</Text>
                 {/* Progress bar for items */}
                 <div style={{ marginTop: 8, height: 3, background: '#e2e8f0', borderRadius: 2 }}>
                   <div style={{
@@ -1126,12 +1128,12 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                   {currentTask.items_completed && currentTask.processing_time ? 
                     (currentTask.items_completed / (currentTask.processing_time / 1000)).toFixed(1) : '0.0'}
                 </div>
-                <Text style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#92400e' }}>Items/sec</Text>
+                <Text style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#92400e' }}>{t('file_translation:stats.items_per_sec')}</Text>
                 {/* Speed indicator */}
                 <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                   <ThunderboltOutlined style={{ color: '#f59e0b', fontSize: 12 }} />
                   <Text style={{ fontSize: 10, color: '#92400e' }}>
-                    {currentTask.items_completed && currentTask.processing_time ? 'Fast' : 'Initializing'}
+                    {currentTask.items_completed && currentTask.processing_time ? t('file_translation:stats.fast') : t('file_translation:stats.initializing')}
                   </Text>
                 </div>
               </Card>
@@ -1151,13 +1153,13 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                     currentTask.total_items && currentTask.items_completed ? 
                       Math.ceil(((currentTask.total_items - currentTask.items_completed) * 2.5)) + 's' : '~'}
                 </div>
-                <Text style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#065f46' }}>Time Remaining</Text>
+                <Text style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#065f46' }}>{t('file_translation:stats.time_remaining')}</Text>
                 {/* Time indicator */}
                 <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                   <ClockCircleOutlined style={{ color: '#10b981', fontSize: 12 }} />
                   <Text style={{ fontSize: 10, color: '#065f46' }}>
                     {currentTask.processing_time ? 
-                      `${Math.floor((currentTask.processing_time || 0) / 1000)}s elapsed` : 'Starting'}
+                      `${Math.floor((currentTask.processing_time || 0) / 1000)}s ${t('file_translation:stats.elapsed')}` : t('file_translation:stats.starting')}
                   </Text>
                 </div>
               </Card>
@@ -1177,7 +1179,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                     /{getTotalPhases(translationMode)}
                   </span>
                 </div>
-                <Text style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#6b21a8' }}>Current Phase</Text>
+                <Text style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#6b21a8' }}>{t('file_translation:stats.current_phase')}</Text>
                 {/* Phase indicator */}
                 <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                   <GlobalOutlined style={{ color: '#8b5cf6', fontSize: 12 }} />
@@ -1233,14 +1235,14 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                 setIsTranslating(false);
                 setCurrentTask(null);
                 notification.info({
-                  message: 'Translation Cancelled',
-                  description: 'The translation task has been cancelled.',
+                  message: t('file_translation:messages.translation_cancelled'),
+                  description: t('file_translation:messages.task_cancelled'),
                   duration: 3
                 });
               }}
               style={{ minWidth: 120 }}
             >
-              Cancel Translation
+              {t('file_translation:labels.cancel_translation')}
             </Button>
           </div>
         </Card>
@@ -1254,9 +1256,9 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
       <div className="file-translation-view" style={{ padding: '40px', maxWidth: 1000, margin: '0 auto' }}>
         <Card style={{ textAlign: 'center', borderRadius: 12 }}>
           <CheckCircleOutlined style={{ fontSize: 64, color: '#10b981', marginBottom: 24 }} />
-          <Title level={2} style={{ color: '#10b981', marginBottom: 16 }}>Translation Complete!</Title>
+          <Title level={2} style={{ color: '#10b981', marginBottom: 16 }}>{t('file_translation:messages.translation_complete')}!</Title>
           <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 32 }}>
-            Successfully translated {currentTask.items_completed || segments.length} segments from {getLanguageDisplay(sourceLanguage)} to {getLanguageDisplay(targetLanguage)}
+            Successfully translated {segments.length} segments from {getLanguageDisplay(sourceLanguage)} to {getLanguageDisplay(targetLanguage)}
           </Text>
           
           <Space size="large" style={{ marginBottom: 32 }}>
@@ -1273,7 +1275,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                 paddingRight: 28 
               }}
             >
-              Download Translated File
+              {t('file_translation:buttons.download_translated_file')}
             </Button>
             <Button 
               size="large"
@@ -1283,7 +1285,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
               }}
               style={{ height: 44 }}
             >
-              Review Translations
+              {t('file_translation:buttons.review_translations')}
             </Button>
           </Space>
           
@@ -1293,13 +1295,13 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
               <Col span={8}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1e293b' }}>{segments.length}</div>
-                  <Text type="secondary">Segments Translated</Text>
+                  <Text type="secondary">{t('file_translation:stats.segments_translated')}</Text>
                 </div>
               </Col>
               <Col span={8}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 'bold', color: '#8b5cf6' }}>{fileInfo?.format}</div>
-                  <Text type="secondary">Original Format</Text>
+                  <Text type="secondary">{t('file_translation:stats.original_format')}</Text>
                 </div>
               </Col>
               <Col span={8}>
@@ -1307,7 +1309,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
                   <div style={{ fontSize: 20, fontWeight: 'bold', color: '#059669' }}>
                     {currentTask.processing_time ? Math.ceil(currentTask.processing_time / 1000) + 's' : '~'}
                   </div>
-                  <Text type="secondary">Processing Time</Text>
+                  <Text type="secondary">{t('file_translation:stats.processing_time')}</Text>
                 </div>
               </Col>
             </Row>

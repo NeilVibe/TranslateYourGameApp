@@ -1,0 +1,39 @@
+{
+  "buttons": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "upload": "Télécharger",
+    "download": "Télécharger",
+    "translate": "Traduire",
+    "create": "Créer",
+    "update": "Mettre à jour",
+    "close": "Fermer",
+    "ok": "OK"
+  },
+  "status": {
+    "loading": "Chargement...",
+    "saving": "Enregistrement...",
+    "processing": "Traitement...",
+    "completed": "Terminé",
+    "failed": "Échec",
+    "success": "Succès",
+    "error": "Erreur"
+  },
+  "languages": {
+    "english": "Anglais",
+    "korean": "Coréen", 
+    "french": "Français",
+    "auto_detect": "Détection automatique",
+    "source_language": "Langue source",
+    "target_language": "Langue cible"
+  },
+  "tokens": {
+    "balance": "Solde de jetons",
+    "used": "jetons utilisés",
+    "remaining": "jetons restants"
+  },
+  "navigation": {
+    "website": "Site web"
+  }
+}

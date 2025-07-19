@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ConfigProvider, Layout, message, notification, theme, App as AntdApp } from 'antd';
+import { useTranslation } from 'react-i18next';
+import enUS from 'antd/locale/en_US';
+import koKR from 'antd/locale/ko_KR';
+import frFR from 'antd/locale/fr_FR';
 import apiClient from './services/apiClient';
 import fileParser from './services/fileParser';
 import Header from './components/Header';
@@ -10,9 +14,22 @@ import MinimalChatbotTranslation from './components/MinimalChatbotTranslation';
 import ProfessionalGlossaryManager from './components/ProfessionalGlossaryManager';
 import ProfessionalFileTranslation from './components/ProfessionalFileTranslation';
 import UpdateNotification from './components/UpdateNotification';
+import './i18n'; // Initialize i18n
 import './App.css';
 
 const { Content } = Layout;
+
+// Ant Design locale mapping
+const getAntdLocale = (language: string) => {
+  switch (language) {
+    case 'ko':
+      return koKR;
+    case 'fr':
+      return frFR;
+    default:
+      return enUS;
+  }
+};
 
 interface AppState {
   apiKey: string | null;
@@ -27,6 +44,8 @@ interface AppState {
 
 function App() {
   console.log('App component rendering...');
+  
+  const { i18n } = useTranslation();
   
   const [state, setState] = useState<AppState>({
     apiKey: null,
@@ -303,6 +322,7 @@ function App() {
 
   return (
     <ConfigProvider
+      locale={getAntdLocale(i18n.language)}
       theme={{
         algorithm: theme.darkAlgorithm,
         token: {

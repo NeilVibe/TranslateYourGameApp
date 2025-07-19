@@ -1,0 +1,11 @@
+{
+  "glossary_placeholder": "Sélectionner les glossaires...",
+  "input_placeholder": "Entrez le texte à traduire...",
+  "translate_button": "Traduire",
+  "clear_button": "Effacer",
+  "copy_button": "Copier",
+  "translating": "Traduction...",
+  "no_api_key": "Aucune clé API fournie",
+  "translation_error": "Échec de la traduction",
+  "copied_success": "Copié dans le presse-papiers"
+}
