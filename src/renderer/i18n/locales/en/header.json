@@ -5,5 +5,20 @@
     "glossaries": "Glossaries"
   },
   "token_balance": "{{balance}} tokens",
-  "settings": "Settings"
+  "settings": "Settings",
+  "token_module": {
+    "title": "Token Balance",
+    "current_balance": "Current Balance",
+    "usage_today": "Used Today",
+    "usage_week": "Last 7 Days",
+    "last_updated": "Last Updated",
+    "usage_stats": "Usage Statistics",
+    "close": "Close",
+    "refresh": "Refresh",
+    "tokens": "tokens",
+    "unlimited": "Unlimited",
+    "no_usage": "No usage yet",
+    "loading": "Loading...",
+    "error": "Failed to load usage data"
+  }
 }

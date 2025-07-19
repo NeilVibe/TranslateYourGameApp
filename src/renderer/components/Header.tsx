@@ -1,7 +1,8 @@
-import React from 'react';
-import { Layout, Button, Typography, Space, Badge, Menu } from 'antd';
-import { SettingOutlined, GlobalOutlined, MessageOutlined, FileTextOutlined, BookOutlined, ThunderboltOutlined, ApiOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Layout, Button, Typography, Space, Menu } from 'antd';
+import { SettingOutlined, GlobalOutlined, MessageOutlined, FileTextOutlined, BookOutlined, ThunderboltOutlined, ApiOutlined, CrownOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import TokenBalanceModule from './TokenBalanceModule';
 
 const { Header: AntHeader } = Layout;
 const { Title, Text } = Typography;
@@ -22,6 +23,7 @@ const Header: React.FC<HeaderProps> = ({
   onTabChange
 }) => {
   const { t } = useTranslation(['header', 'common']);
+  const [tokenModuleVisible, setTokenModuleVisible] = useState(false);
   
   const menuItems = [
     {
@@ -73,15 +75,42 @@ const Header: React.FC<HeaderProps> = ({
       
       <Space size="large">
         {tokenBalance !== null && (
-          <Badge count={tokenBalance} showZero style={{ backgroundColor: '#8b5cf6' }}>
-            <Text strong style={{ color: '#e2e8f0' }}>{t('common:tokens.balance')}</Text>
-          </Badge>
+          <Button 
+            type="text"
+            icon={<CrownOutlined />}
+            onClick={() => setTokenModuleVisible(true)}
+            style={{
+              color: '#FFD700',
+              border: '1px solid rgba(255, 215, 0, 0.3)',
+              background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(139, 92, 246, 0.1))',
+              borderRadius: '8px',
+              height: '36px',
+              padding: '0 12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(139, 92, 246, 0.2))';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(139, 92, 246, 0.1))';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <Text strong style={{ color: '#FFD700', fontSize: 14 }}>
+              {t('header:token_balance', { balance: tokenBalance.toLocaleString() })}
+            </Text>
+          </Button>
         )}
         
         <Button 
           icon={<GlobalOutlined />}
           onClick={onWebsiteClick}
           type="text"
+          style={{ color: '#e2e8f0' }}
         >
           {t('common:navigation.website')}
         </Button>
@@ -90,10 +119,18 @@ const Header: React.FC<HeaderProps> = ({
           icon={<SettingOutlined />}
           onClick={onSettingsClick}
           type="text"
+          style={{ color: '#e2e8f0' }}
         >
           {t('header:settings')}
         </Button>
       </Space>
+
+      {/* Token Balance Module */}
+      <TokenBalanceModule
+        visible={tokenModuleVisible}
+        onClose={() => setTokenModuleVisible(false)}
+        initialBalance={tokenBalance || 0}
+      />
     </AntHeader>
   );
 };

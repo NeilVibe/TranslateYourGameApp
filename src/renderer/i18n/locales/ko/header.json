@@ -5,5 +5,20 @@
     "glossaries": "글로서리"
   },
   "token_balance": "{{balance}} 토큰",
-  "settings": "설정"
+  "settings": "설정",
+  "token_module": {
+    "title": "토큰 잔액",
+    "current_balance": "현재 잔액",
+    "usage_today": "오늘 사용량",
+    "usage_week": "최근 7일",
+    "last_updated": "마지막 업데이트",
+    "usage_stats": "사용 통계",
+    "close": "닫기",
+    "refresh": "새로고침",
+    "tokens": "토큰",
+    "unlimited": "무제한",
+    "no_usage": "아직 사용량 없음",
+    "loading": "로딩 중...",
+    "error": "사용량 데이터 로드 실패"
+  }
 }

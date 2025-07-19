@@ -5,5 +5,20 @@
     "glossaries": "Glossaires"
   },
   "token_balance": "{{balance}} token",
-  "settings": "Paramètres"
+  "settings": "Paramètres",
+  "token_module": {
+    "title": "Solde de token",
+    "current_balance": "Solde actuel",
+    "usage_today": "Aujourd'hui",
+    "usage_week": "7 derniers jours",
+    "last_updated": "Dernière mise à jour",
+    "usage_stats": "Statistiques d'utilisation",
+    "close": "Fermer",
+    "refresh": "Actualiser",
+    "tokens": "token",
+    "unlimited": "Illimité",
+    "no_usage": "Aucune utilisation encore",
+    "loading": "Chargement...",
+    "error": "Échec du chargement des données d'utilisation"
+  }
 }
