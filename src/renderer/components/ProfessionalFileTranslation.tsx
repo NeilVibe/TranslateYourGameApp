@@ -1256,7 +1256,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
           <CheckCircleOutlined style={{ fontSize: 64, color: '#10b981', marginBottom: 24 }} />
           <Title level={2} style={{ color: '#10b981', marginBottom: 16 }}>Translation Complete!</Title>
           <Text type="secondary" style={{ fontSize: 16, display: 'block', marginBottom: 32 }}>
-            Successfully translated {segments.length} segments from {getLanguageDisplay(sourceLanguage)} to {getLanguageDisplay(targetLanguage)}
+            Successfully translated {currentTask.items_completed || segments.length} segments from {getLanguageDisplay(sourceLanguage)} to {getLanguageDisplay(targetLanguage)}
           </Text>
           
           <Space size="large" style={{ marginBottom: 32 }}>
