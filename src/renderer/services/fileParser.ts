@@ -113,7 +113,8 @@ class FileParser {
       Object.entries(data).forEach(([key, value]) => {
         if (typeof value === 'string') {
           entries.push({
-            source: value,
+            source: key,      // KEY is the source text
+            target: value,    // VALUE is the translation
             metadata: { id: key }
           });
         } else if (typeof value === 'object' && value !== null) {
