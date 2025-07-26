@@ -53,28 +53,15 @@ class FileParser {
       throw new Error('Excel file is empty');
     }
 
-    // Try to auto-detect source and target columns
+    // Simple no-header mode - always use columns 0 and 1
+    const sourceColumn = 0;
+    const targetColumn = 1;
     const headers = data[0] as string[];
-    let sourceColumn = 0;
-    let targetColumn = 1;
-
-    // Look for common column names
-    const sourcePatterns = /^(source|text|original|english|en|ko|ja|zh|fr|de|es|it|pt)/i;
-    const targetPatterns = /^(target|translation|translated|localized)/i;
-
-    headers.forEach((header, index) => {
-      if (sourcePatterns.test(header)) {
-        sourceColumn = index;
-      }
-      if (targetPatterns.test(header)) {
-        targetColumn = index;
-      }
-    });
 
     const entries: ParsedEntry[] = [];
     
-    // Skip header row
-    for (let i = 1; i < data.length; i++) {
+    // Start from row 0 - no header skipping
+    for (let i = 0; i < data.length; i++) {
       const row = data[i];
       if (row[sourceColumn]) {
         entries.push({
