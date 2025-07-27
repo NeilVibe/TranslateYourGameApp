@@ -44,6 +44,8 @@
     },
     "removePackageScripts": true,
     "buildDependenciesFromSource": false,
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
     "files": [
       "build/**/*",
       "!build/renderer.js.map",
@@ -53,13 +55,15 @@
       "!webpack.dev.config.js",
       "!web-dev.log",
       "!webpack.log",
-      "!node_modules/@ant-design/charts/**/*"
+      "!node_modules/@ant-design/charts/**/*",
+      "!node_modules/@antv/**/*"
     ],
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico",
       "artifactName": "Translate.Your.Game.Setup.${version}.${ext}",
-      "requestedExecutionLevel": "asInvoker"
+      "requestedExecutionLevel": "asInvoker",
+      "forceCodeSigning": false
     },
     "nsis": {
       "artifactName": "Translate.Your.Game.Setup.${version}.${ext}"
