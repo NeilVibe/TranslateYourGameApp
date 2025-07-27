@@ -42,6 +42,8 @@
     "directories": {
       "output": "dist"
     },
+    "removePackageScripts": true,
+    "buildDependenciesFromSource": false,
     "files": [
       "build/**/*",
       "!build/renderer.js.map",
@@ -50,12 +52,14 @@
       "!tsconfig.json",
       "!webpack.dev.config.js",
       "!web-dev.log",
-      "!webpack.log"
+      "!webpack.log",
+      "!node_modules/@ant-design/charts/**/*"
     ],
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico",
-      "artifactName": "Translate.Your.Game.Setup.${version}.${ext}"
+      "artifactName": "Translate.Your.Game.Setup.${version}.${ext}",
+      "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
       "artifactName": "Translate.Your.Game.Setup.${version}.${ext}"
