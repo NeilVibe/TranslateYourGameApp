@@ -9,6 +9,12 @@ module.exports = {
     path: path.resolve(__dirname, 'build'),
     filename: 'renderer.js',
   },
+  optimization: {
+    // CI-specific optimizations
+    minimize: true,
+    usedExports: true,
+    sideEffects: false,
+  },
   module: {
     rules: [
       {

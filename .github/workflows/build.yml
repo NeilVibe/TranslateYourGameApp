@@ -30,18 +30,21 @@ jobs:
 
     - run: npm ci
     
-    - run: npm run build
-
+    - name: Build App
+      timeout-minutes: 10
+      run: npm run build
+      
     - name: Build Electron App
+      timeout-minutes: 15
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         if [ "${{ matrix.platform }}" = "win" ]; then
-          npm run release:win
+          npm run ci:release:win
         elif [ "${{ matrix.platform }}" = "mac" ]; then
-          npm run release:mac
+          npm run ci:release:mac
         else
-          npm run release:linux
+          npm run ci:release:linux
         fi
       shell: bash
 
