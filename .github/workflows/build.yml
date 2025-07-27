@@ -29,10 +29,6 @@ jobs:
         cache: 'npm'
 
     - run: npm ci
-    
-    - name: Build App
-      timeout-minutes: 10
-      run: npm run build
       
     - name: Build Electron App
       timeout-minutes: 15
