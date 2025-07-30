@@ -57,10 +57,12 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   const [inlineEditValue, setInlineEditValue] = useState<{source: string, target: string}>({source: '', target: ''});
   const [form] = Form.useForm();
   
-  // Enhanced Search & Filter
+  // Enhanced Search & Filter with Debouncing
   const [searchText, setSearchText] = useState('');
+  const [debouncedSearchText, setDebouncedSearchText] = useState('');
   const [searchMode, setSearchMode] = useState<'contains' | 'exact' | 'embedding'>('contains');
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   
   // Upload state (simplified - no blocking modal)
   const [isUploading, setIsUploading] = useState(false);
@@ -68,6 +70,9 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   // Create Glossary Modal state
   const [isCreateGlossaryModalVisible, setIsCreateGlossaryModalVisible] = useState(false);
   const [createGlossaryForm] = Form.useForm();
+  
+  // Embedding search results
+  const [embeddingSearchResults, setEmbeddingSearchResults] = useState<GlossaryEntry[]>([]);
 
   // Load data
   useEffect(() => {
@@ -82,6 +87,32 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
       loadGlossaryEntries(selectedGlossary.id, 1, true);
     }
   }, [selectedGlossary]);
+
+  // Debounce search input (300ms delay to eliminate keystroke lag)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchText(searchText);
+      setIsSearching(false);
+    }, 300);
+
+    // Show searching state for immediate feedback
+    if (searchText !== debouncedSearchText) {
+      setIsSearching(true);
+    }
+
+    return () => clearTimeout(timer);
+  }, [searchText, debouncedSearchText]);
+
+  // Trigger embedding search when search mode is embedding and we have debounced text
+  useEffect(() => {
+    if (searchMode === 'embedding' && debouncedSearchText.trim()) {
+      performEmbeddingSearch(debouncedSearchText).then(results => {
+        setEmbeddingSearchResults(results);
+      });
+    } else {
+      setEmbeddingSearchResults([]);
+    }
+  }, [searchMode, debouncedSearchText, selectedGlossary]);
 
   const loadGlossaries = async () => {
     try {
@@ -139,22 +170,24 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     }
   };
 
-  // Enhanced search processing with embedding support
+  // Enhanced search processing with debouncing and embedding support
   const processedEntries = useMemo(() => {
+    // If embedding mode and we have search results, use those
+    if (searchMode === 'embedding' && debouncedSearchText.trim() && embeddingSearchResults.length > 0) {
+      return embeddingSearchResults;
+    }
+    
+    // Otherwise filter normally
     let filtered = entries.filter(entry => {
-      if (searchText === '') return true;
+      if (debouncedSearchText === '') return true;
       
-      const searchLower = searchText.toLowerCase();
+      const searchLower = debouncedSearchText.toLowerCase();
       const sourceLower = entry.source_text.toLowerCase();
       const targetLower = entry.target_text.toLowerCase();
       
       switch (searchMode) {
         case 'exact':
           return sourceLower === searchLower || targetLower === searchLower;
-        case 'embedding':
-          // For embedding search, we'll use contains for now but mark it for API implementation
-          // TODO: Implement embedding search via embeddings API endpoint
-          return sourceLower.includes(searchLower) || targetLower.includes(searchLower);
         case 'contains':
         default:
           return sourceLower.includes(searchLower) || targetLower.includes(searchLower);
@@ -164,32 +197,45 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     // Sort by length (shortest first) by default
     filtered.sort((a, b) => a.source_text.length - b.source_text.length);
     return filtered;
-  }, [entries, searchText, searchMode]);
+  }, [entries, debouncedSearchText, searchMode, embeddingSearchResults]);
 
-  // Embedding search function (future implementation)
-  const performEmbeddingSearch = async (query: string) => {
+  // Real embedding search function using actual API
+  const performEmbeddingSearch = async (query: string): Promise<GlossaryEntry[]> => {
+    if (!selectedGlossary || !query.trim()) return [];
+    
     try {
-      // This would call the embedding search API endpoint
-      const response = await fetch(`${apiBaseUrl}/glossaries/${selectedGlossary?.id}/search`, {
+      setIsSearching(true);
+      const response = await fetch(`${apiBaseUrl}/glossaries/${selectedGlossary.id}/embedding-search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'X-API-Key': apiKey
         },
         body: JSON.stringify({
-          query: query,
-          search_type: 'embedding'
+          text: query,
+          top_k: 50
         })
       });
       
       if (response.ok) {
-        const results = await response.json();
-        return results;
+        const data = await response.json();
+        if (data.status === 'success' && data.data?.similar_entries) {
+          return data.data.similar_entries.map((item: any) => ({
+            id: item.entry_id,
+            source_text: item.source_text,
+            target_text: item.target_text,
+            created_at: item.created_at || '',
+            similarity_score: item.similarity_score
+          }));
+        }
       }
     } catch (error) {
       console.error('Embedding search error:', error);
+      message.error('Semantic search failed, falling back to text search');
+    } finally {
+      setIsSearching(false);
     }
-    return null;
+    return [];
   };
 
   // Inline editing handlers
@@ -617,16 +663,17 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
               }}
               allowClear
               size="large"
+              suffix={isSearching ? <SearchOutlined spin /> : <SearchOutlined />}
             />
             <Select
               value={searchMode}
               onChange={setSearchMode}
-              style={{ width: 140 }}
+              style={{ width: 160 }}
               size="large"
             >
-              <Option value="contains">Contains</Option>
+              <Option value="contains">Text Search</Option>
               <Option value="exact">Exact Match</Option>
-              <Option value="embedding">AI Search</Option>
+              <Option value="embedding">Semantic Search</Option>
             </Select>
             <Button 
               type="primary" 
@@ -654,6 +701,17 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
               </Button>
             </Upload>
           </div>
+
+          {/* Search Results Indicator */}
+          {debouncedSearchText && (
+            <div style={{ marginBottom: '12px', color: '#8b5cf6', fontSize: '14px' }}>
+              <SearchOutlined style={{ marginRight: '8px' }} />
+              {processedEntries.length} {processedEntries.length === 1 ? 'result' : 'results'} found
+              {searchMode === 'embedding' && (
+                <Tag color="blue" style={{ marginLeft: '8px' }}>AI-Powered</Tag>
+              )}
+            </div>
+          )}
 
           {/* Bulk Operations */}
           {selectedRowKeys.length > 0 && (
