@@ -7,7 +7,6 @@ import frFR from 'antd/locale/fr_FR';
 import apiClient from './services/apiClient';
 import fileParser from './services/fileParser';
 import Header from './components/Header';
-import TranslationProgress from './components/TranslationProgress';
 import SettingsModal from './components/SettingsModal';
 import GlossarySelector from './components/GlossarySelector';
 import MinimalChatbotTranslation from './components/MinimalChatbotTranslation';
@@ -157,52 +156,71 @@ function App() {
     }
   };
 
-  const handleStartTranslation = async () => {
-    if (!parseResult || !state.apiKey) return;
-
-    setState(prev => ({ ...prev, isProcessing: true }));
+  const handleStartTranslation = async (translationData?: any) => {
+    if (!state.apiKey) return;
 
     try {
-      // Submit translation task
-      const response = await apiClient.translateFile({
-        file_entries: parseResult.entries.map((entry: any) => ({
-          source: entry.source,
-          metadata: entry.metadata
-        })),
-        source_lang: state.sourceLanguage,
-        target_lang: state.targetLanguage,
-        glossary_ids: state.selectedGlossaries
-      });
+      // Use translationData if provided (from ProfessionalFileTranslation)
+      // Otherwise use parseResult (legacy support)
+      let response;
+      let entryCount = 0;
+      
+      if (translationData && translationData.taskId) {
+        // New workflow: Use existing parsed task and start translation
+        response = await apiClient.startTranslationFromParsedFile(
+          translationData.taskId,
+          translationData.sourceLanguage,
+          translationData.targetLanguage,
+          translationData.translationMode,
+          translationData.useGlossaries,
+          translationData.selectedGlossaries
+        );
+        entryCount = translationData.segments.length;
+      } else if (parseResult) {
+        // Legacy workflow: Direct file translation
+        response = await apiClient.translateFile({
+          file_entries: parseResult.entries.map((entry: any) => ({
+            source: entry.source,
+            metadata: entry.metadata
+          })),
+          source_lang: state.sourceLanguage,
+          target_lang: state.targetLanguage,
+          glossary_ids: state.selectedGlossaries
+        });
+        entryCount = parseResult.entries.length;
+      } else {
+        return; // No data to translate
+      }
 
       const taskId = response.data.task_id;
-      setState(prev => ({ ...prev, currentTask: { id: taskId, status: 'processing' } }));
-
-      // Poll for task status
-      const pollInterval = setInterval(async () => {
-        try {
-          const taskStatus = await apiClient.getTaskStatus(taskId);
-          
-          setState(prev => ({
-            ...prev,
-            currentTask: taskStatus
-          }));
-
-          if (taskStatus.status === 'completed') {
-            clearInterval(pollInterval);
-            handleTranslationComplete(taskId);
-          } else if (taskStatus.status === 'failed') {
-            clearInterval(pollInterval);
-            throw new Error(taskStatus.error_message || 'Translation failed');
-          }
-        } catch (error) {
-          clearInterval(pollInterval);
-          throw error;
+      
+      // Show sliding notification instead of blocking progress
+      notification.open({
+        message: 'File Translation Started',
+        description: `Translating ${entryCount} entries. View progress in the Tasks tab.`,
+        duration: 4.5,
+        style: {
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          borderRadius: '8px'
         }
-      }, 2000);
+      });
+
+      // RETURN TO NEUTRAL STATE - no more blocking progress UI
+      setState(prev => ({ 
+        ...prev, 
+        isProcessing: false,  // Return to neutral
+        currentTask: null,    // Clear old task
+        currentTab: 'tasks'   // Switch to Tasks tab to see progress
+      }));
+      
+      // Clear the parsed file to return to clean state
+      if (parseResult) {
+        setParseResult(null);
+      }
 
     } catch (error: any) {
       message.error(`Translation failed: ${error.message}`);
-      setState(prev => ({ ...prev, isProcessing: false, currentTask: null }));
     }
   };
 
@@ -270,15 +288,7 @@ function App() {
   };
 
   const renderContent = () => {
-    // Show processing view if file translation is in progress
-    if (state.isProcessing && state.currentTab === 'file-translation') {
-      return (
-        <TranslationProgress 
-          task={state.currentTask}
-          totalEntries={parseResult?.entries.length || 0}
-        />
-      );
-    }
+    // File translation now shows in Tasks tab - no separate progress UI needed
 
     // Render content based on current tab
     switch (state.currentTab) {
@@ -305,6 +315,7 @@ function App() {
             onSourceLanguageChange={(lang) => setState(prev => ({ ...prev, sourceLanguage: lang }))}
             onTargetLanguageChange={(lang) => setState(prev => ({ ...prev, targetLanguage: lang }))}
             apiKey={state.apiKey}
+            onStartTranslation={handleStartTranslation}
           />
         );
 

@@ -48,6 +48,7 @@ interface ProfessionalFileTranslationProps {
   onSourceLanguageChange: (lang: string) => void;
   onTargetLanguageChange: (lang: string) => void;
   apiKey: string | null;
+  onStartTranslation?: (translationData: any) => Promise<void>; // Centralized handler with data
 }
 
 interface TranslationSegment {
@@ -69,7 +70,8 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
   targetLanguage,
   onSourceLanguageChange,
   onTargetLanguageChange,
-  apiKey
+  apiKey,
+  onStartTranslation
 }) => {
   const { t } = useTranslation(['file_translation', 'common']);
   const [fileInfo, setFileInfo] = useState<any>(null);
@@ -79,6 +81,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
   const [useGlossaries, setUseGlossaries] = useState<boolean>(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [currentTask, setCurrentTask] = useState<TaskResponse | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // Store file separately
   const [searchText, setSearchText] = useState('');
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
 
@@ -151,8 +154,13 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
           }));
           
           setSegments(previewSegments);
-          // Store parsed file data but don't start translation
-          setCurrentTask({ task_id: taskId, status: 'parsed', progress: 0 });
+          // Store parsed task and file separately
+          setCurrentTask({ 
+            task_id: taskId, 
+            status: 'parsed', 
+            progress: 0
+          });
+          setSelectedFile(file); // Store file for unified endpoint
           
           notification.success({
             message: t('file_translation:messages.file_parsed'),
@@ -173,6 +181,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
         });
         setFileInfo(null);
         setSegments([]);
+        setSelectedFile(null);
       }
     };
     
@@ -183,7 +192,7 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
   };
 
   const handleStartTranslation = async () => {
-    if (!fileInfo || !apiKey) {
+    if (!fileInfo || !apiKey || !selectedFile) {
       notification.warning({
         message: t('file_translation:messages.no_file'),
         description: t('file_translation:messages.upload_first'),
@@ -192,36 +201,63 @@ const ProfessionalFileTranslation: React.FC<ProfessionalFileTranslationProps> = 
       return;
     }
     
-    setIsTranslating(true);
-    notification.info({
-      message: t('file_translation:messages.translation_started'),
-      description: t('file_translation:messages.creating_task'),
-      duration: 3
-    });
-    
-    try {
-      // Start new translation with current user settings
-      const response = await apiClient.startTranslationFromParsedFile(
-        currentTask?.task_id,
+    // Use centralized handler from App.tsx if provided (maintains compatibility)
+    if (onStartTranslation && currentTask) {
+      // Prepare translation data for centralized handler
+      const translationData = {
+        taskId: currentTask.task_id,
+        segments: segments,
         sourceLanguage,
         targetLanguage,
-        translationMode,  // 'simple' or 'smart'
-        useGlossaries,    // Boolean toggle
-        selectedGlossaries // List of selected glossaries (when enabled)
+        translationMode,
+        useGlossaries,
+        selectedGlossaries
+      };
+      await onStartTranslation(translationData);
+      return;
+    }
+    
+    // NEW UNIFIED APPROACH: Use same pattern as glossary upload
+    try {
+      // Show immediate notification that matches glossary pattern
+      notification.open({
+        message: 'File Translation Started',
+        description: `Translating ${fileInfo.entries} entries. View progress in the Tasks tab.`,
+        duration: 4.5,
+        style: {
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          borderRadius: '8px'
+        }
+      });
+
+      // Use unified endpoint that returns immediate 201 response
+      const response = await apiClient.translateFileImmediate(
+        selectedFile,         // Original file
+        sourceLanguage,
+        targetLanguage,
+        translationMode,      // 'simple' or 'smart'
+        useGlossaries,        // Boolean toggle
+        selectedGlossaries    // List of selected glossaries
       );
       
       if (response.status === 'success') {
-        const newTaskId = response.data.task_id;
-        setCurrentTask({ task_id: newTaskId, status: 'queued', progress: 0 });
+        // Clear state and return to neutral - matches glossary upload pattern
+        setFileInfo(null);
+        setSegments([]);
+        setCurrentTask(null);
+        setSelectedFile(null);
         
-        // Start polling the new task
-        pollTaskStatus(newTaskId);
+        notification.success({
+          message: t('file_translation:messages.translation_queued'),
+          description: t('file_translation:messages.check_tasks_tab'),
+          duration: 4
+        });
       } else {
         throw new Error(response.message || 'Failed to start translation');
       }
     } catch (error: any) {
-      console.error('❌ TRANSLATION START ERROR:', error);
-      setIsTranslating(false);
+      console.error('❌ UNIFIED TRANSLATION ERROR:', error);
       notification.error({
         message: t('file_translation:messages.translation_start_failed'),
         description: error.message || 'Failed to create translation task',

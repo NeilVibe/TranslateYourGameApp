@@ -26,6 +26,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import apiClient from '../services/apiClient';
+import TaskFlowchart from './TaskFlowchart';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -125,6 +126,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
     switch (taskType) {
       case 'file_parsed':
       case 'translate_file_immediate':
+      case 'translate_file':
         return <FileTextOutlined />;
       case 'generate_glossary':
         return <BookOutlined />;
@@ -140,6 +142,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
       case 'file_parsed':
         return 'File Parsing';
       case 'translate_file_immediate':
+      case 'translate_file':
         return 'File Translation';
       case 'generate_glossary':
         return 'Glossary Generation';
@@ -159,6 +162,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
         case 'glossary_upload':
           return `📚 Importing ${fileName}`;
         case 'translate_file_immediate':
+        case 'translate_file':
           return `🌐 Translating ${fileName}`;
         case 'generate_glossary':
           return `🧠 Generating Glossary from ${fileName}`;
@@ -189,18 +193,80 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
     return `${minutes}m ${remainingSeconds}s`;
   };
 
-  const renderActiveTask = (task: Task) => (
-    <Card
-      key={task.id}
-      style={{
-        marginBottom: '20px',
-        borderLeft: `4px solid ${getStatusColor(task.status)}`,
-        background: 'linear-gradient(135deg, #16213e 0%, #1e2749 100%)',
-        borderRadius: '12px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-      }}
-      bodyStyle={{ padding: '24px' }}
-    >
+  const renderActiveTask = (task: Task) => {
+    // Use TaskFlowchart for glossary upload tasks
+    if (task.task_type === 'glossary_upload') {
+      return (
+        <div key={task.id} style={{ marginBottom: '20px' }}>
+          <TaskFlowchart
+            taskName="Importing Game Glossary"
+            fileName={task.input_data?.original_filename || task.input_data?.filename || 'file'}
+            currentPhase={task.current_phase || 'Processing'}
+            currentItem={task.current_item_text}
+            progress={task.progress || 0}
+            itemsCompleted={task.items_completed}
+            itemsTotal={task.items_total}
+            processingSpeed={task.processing_speed}
+            estimatedTime={task.estimated_time_remaining}
+            taskType="glossary_upload"
+          />
+        </div>
+      );
+    }
+    
+    // Use TaskFlowchart for file translation tasks
+    if (task.task_type === 'translate_file' || task.task_type === 'translate_file_immediate') {
+      return (
+        <div key={task.id} style={{ marginBottom: '20px' }}>
+          <TaskFlowchart
+            taskName="Translating Game File"
+            fileName={task.input_data?.original_filename || task.input_data?.filename || 'file'}
+            currentPhase={task.current_phase || 'Processing'}
+            currentItem={task.current_item_text}
+            progress={task.progress || 0}
+            itemsCompleted={task.items_completed}
+            itemsTotal={task.items_total}
+            processingSpeed={task.processing_speed}
+            estimatedTime={task.estimated_time_remaining}
+            taskType="file_translation"
+          />
+        </div>
+      );
+    }
+
+    // Use TaskFlowchart for smart translation with dynamic glossary
+    if (task.task_type === 'dynamic_glossary_workflow') {
+      return (
+        <div key={task.id} style={{ marginBottom: '20px' }}>
+          <TaskFlowchart
+            taskName="Smart Translation + Dynamic Glossary"
+            fileName={task.input_data?.original_filename || task.input_data?.filename || 'file'}
+            currentPhase={task.current_phase || 'Processing'}
+            currentItem={task.current_item_text}
+            progress={task.progress || 0}
+            itemsCompleted={task.items_completed}
+            itemsTotal={task.items_total}
+            processingSpeed={task.processing_speed}
+            estimatedTime={task.estimated_time_remaining}
+            taskType="file_translation"
+          />
+        </div>
+      );
+    }
+
+    // Use regular card for other task types
+    return (
+      <Card
+        key={task.id}
+        style={{
+          marginBottom: '20px',
+          borderLeft: `4px solid ${getStatusColor(task.status)}`,
+          background: 'linear-gradient(135deg, #16213e 0%, #1e2749 100%)',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+        }}
+        bodyStyle={{ padding: '24px' }}
+      >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
         {/* Task Icon */}
         <div style={{ 
@@ -371,7 +437,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
         </div>
       </div>
     </Card>
-  );
+    );
+  };
 
   const historyColumns = [
     {

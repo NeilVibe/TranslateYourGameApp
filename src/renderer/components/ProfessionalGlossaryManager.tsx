@@ -60,9 +60,8 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   const [inlineEditValue, setInlineEditValue] = useState<{source: string, target: string}>({source: '', target: ''});
   const [form] = Form.useForm();
   
-  // Enhanced Search & Filter with Debouncing
+  // Enhanced Search & Filter - INSTANT SEARCH (no debounce)
   const [searchText, setSearchText] = useState('');
-  const [debouncedSearchText, setDebouncedSearchText] = useState('');
   const [searchMode, setSearchMode] = useState<'contains' | 'exact' | 'embedding'>('contains');
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -95,31 +94,29 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     }
   }, [selectedGlossary]);
 
-  // Debounce search input (300ms delay to eliminate keystroke lag)
+  // SMART SEARCH: Trigger backend search when search parameters change
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchText(searchText);
-      setIsSearching(false);
-    }, 300);
-
-    // Show searching state for immediate feedback
-    if (searchText !== debouncedSearchText) {
-      setIsSearching(true);
+    if (selectedGlossary && (searchMode === 'contains' || searchMode === 'exact')) {
+      setEntries([]);
+      setCurrentPage(1);
+      setHasMoreEntries(true);
+      // Backend searches ENTIRE glossary, not just loaded entries
+      loadGlossaryEntries(selectedGlossary.id, 1, true, searchText, searchMode);
     }
+  }, [selectedGlossary, searchText, searchMode]);
 
-    return () => clearTimeout(timer);
-  }, [searchText, debouncedSearchText]);
+  // Instant search - no debounce for maximum speed
 
-  // Trigger embedding search when search mode is embedding and we have debounced text
+  // Trigger embedding search when search mode is embedding and we have search text
   useEffect(() => {
-    if (searchMode === 'embedding' && debouncedSearchText.trim()) {
-      performEmbeddingSearch(debouncedSearchText).then(results => {
+    if (searchMode === 'embedding' && searchText.trim()) {
+      performEmbeddingSearch(searchText).then(results => {
         setEmbeddingSearchResults(results);
       });
     } else {
       setEmbeddingSearchResults([]);
     }
-  }, [searchMode, debouncedSearchText, selectedGlossary]);
+  }, [searchMode, searchText, selectedGlossary]);
 
   const loadGlossaries = async () => {
     try {
@@ -142,10 +139,24 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     }
   };
 
-  const loadGlossaryEntries = async (glossaryId: number, page: number = 1, reset: boolean = false) => {
+  const loadGlossaryEntries = async (glossaryId: number, page: number = 1, reset: boolean = false, search: string = '', searchType: string = 'contains') => {
     try {
       setLoading(true);
-      const response = await fetch(`${apiBaseUrl}/glossaries/${glossaryId}/entries?include_line_entries=true&page=${page}&per_page=50`, {
+      
+      // Build search parameters for FULL GLOSSARY backend search
+      const searchParams = new URLSearchParams({
+        include_line_entries: 'true',
+        page: page.toString(),
+        per_page: '50'
+      });
+      
+      // Add search parameters - backend will search ENTIRE glossary
+      if (search.trim()) {
+        searchParams.append('search', search.trim());
+        searchParams.append('search_type', searchType);
+      }
+      
+      const response = await fetch(`${apiBaseUrl}/glossaries/${glossaryId}/entries?${searchParams.toString()}`, {
         headers: { 'X-API-Key': apiKey }
       });
       
@@ -177,34 +188,16 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
     }
   };
 
-  // Enhanced search processing with debouncing and embedding support
+  // SMART ARCHITECTURE: Backend does full-glossary search, frontend shows results
   const processedEntries = useMemo(() => {
     // If embedding mode and we have search results, use those
-    if (searchMode === 'embedding' && debouncedSearchText.trim() && embeddingSearchResults.length > 0) {
+    if (searchMode === 'embedding' && searchText.trim() && embeddingSearchResults.length > 0) {
       return embeddingSearchResults;
     }
     
-    // Otherwise filter normally
-    let filtered = entries.filter(entry => {
-      if (debouncedSearchText === '') return true;
-      
-      const searchLower = debouncedSearchText.toLowerCase();
-      const sourceLower = entry.source_text.toLowerCase();
-      const targetLower = entry.target_text.toLowerCase();
-      
-      switch (searchMode) {
-        case 'exact':
-          return sourceLower === searchLower || targetLower === searchLower;
-        case 'contains':
-        default:
-          return sourceLower.includes(searchLower) || targetLower.includes(searchLower);
-      }
-    });
-
-    // Sort by length (shortest first) by default
-    filtered.sort((a, b) => a.source_text.length - b.source_text.length);
-    return filtered;
-  }, [entries, debouncedSearchText, searchMode, embeddingSearchResults]);
+    // Return entries as-is - backend already did the search and sorting
+    return entries;
+  }, [entries, searchMode, embeddingSearchResults]);
 
   // Real embedding search function using actual API
   const performEmbeddingSearch = async (query: string): Promise<GlossaryEntry[]> => {
@@ -226,19 +219,20 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
       
       if (response.ok) {
         const data = await response.json();
-        if (data.status === 'success' && data.data?.similar_entries) {
-          return data.data.similar_entries.map((item: any) => ({
-            id: item.entry_id,
+        if (data.status === 'success' && data.data?.results) {
+          return data.data.results.map((item: any, index: number) => ({
+            id: item.entry_id || index,
             source_text: item.source_text,
             target_text: item.target_text,
             created_at: item.created_at || '',
-            similarity_score: item.similarity_score
+            similarity_score: item.similarity || 0,
+            strategy: item.strategy || 'fuzzy'
           }));
         }
       }
     } catch (error) {
       console.error('Embedding search error:', error);
-      message.error('Semantic search failed, falling back to text search');
+      message.error('Fuzzy search failed, falling back to text search');
     } finally {
       setIsSearching(false);
     }
@@ -790,7 +784,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
             >
               <Option value="contains">Text Search</Option>
               <Option value="exact">Exact Match</Option>
-              <Option value="embedding">Semantic Search</Option>
+              <Option value="embedding">Fuzzy Search</Option>
             </Select>
             <Button 
               type="primary" 
@@ -820,12 +814,12 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
           </div>
 
           {/* Search Results Indicator */}
-          {debouncedSearchText && (
+          {searchText && (
             <div style={{ marginBottom: '12px', color: '#8b5cf6', fontSize: '14px' }}>
               <SearchOutlined style={{ marginRight: '8px' }} />
               {processedEntries.length} {processedEntries.length === 1 ? 'result' : 'results'} found
               {searchMode === 'embedding' && (
-                <Tag color="blue" style={{ marginLeft: '8px' }}>AI-Powered</Tag>
+                <Tag color="purple" style={{ marginLeft: '8px' }}>Fuzzy Search</Tag>
               )}
             </div>
           )}
@@ -867,6 +861,24 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
               borderRadius: '8px'
             }}
             className="professional-glossary-table"
+            locale={{
+              emptyText: searchText ? (
+                <div style={{ color: '#666', padding: '40px' }}>
+                  <SearchOutlined style={{ fontSize: '48px', opacity: 0.3, marginBottom: '16px' }} />
+                  <div style={{ fontSize: '16px' }}>No results found for "{searchText}"</div>
+                  <div style={{ fontSize: '14px', marginTop: '8px' }}>
+                    Try different keywords or search mode
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: '#666', padding: '40px' }}>
+                  <div style={{ fontSize: '16px' }}>No entries in this glossary</div>
+                  <div style={{ fontSize: '14px', marginTop: '8px' }}>
+                    Add entries or upload a file to get started
+                  </div>
+                </div>
+              )
+            }}
           />
         </>
       )}

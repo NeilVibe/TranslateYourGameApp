@@ -114,6 +114,24 @@ class APIClient {
     return response.data;
   }
 
+  // Unified file translation endpoint (matches glossary upload pattern)
+  async translateFileImmediate(file: File, sourceLang: string, targetLang: string, translationMode: 'simple' | 'smart' = 'simple', useGlossaries: boolean = false, glossaryIds: number[] = []) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('source_lang', sourceLang);
+    formData.append('target_lang', targetLang);
+    formData.append('translation_mode', translationMode);
+    formData.append('use_glossaries', useGlossaries.toString());
+    glossaryIds.forEach(id => formData.append('glossary_ids[]', id.toString()));
+
+    const response = await this.client.post('/file-translation/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
   // File upload and translation (real file upload with glossary mode support)
   async uploadAndTranslateFile(file: File, sourceLang: string, targetLang: string, glossaryIds: number[] = [], glossaryMode: string = 'existing') {
     const formData = new FormData();
