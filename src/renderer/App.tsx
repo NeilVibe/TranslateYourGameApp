@@ -13,6 +13,7 @@ import GlossarySelector from './components/GlossarySelector';
 import MinimalChatbotTranslation from './components/MinimalChatbotTranslation';
 import ProfessionalGlossaryManager from './components/ProfessionalGlossaryManager';
 import ProfessionalFileTranslation from './components/ProfessionalFileTranslation';
+import TasksTab from './components/TasksTab';
 import UpdateNotification from './components/UpdateNotification';
 import './i18n'; // Initialize i18n
 import './App.css';
@@ -312,6 +313,13 @@ function App() {
           <ProfessionalGlossaryManager
             apiKey={state.apiKey || ''}
             apiBaseUrl="http://localhost:5002/api/v1"
+          />
+        );
+
+      case 'tasks':
+        return (
+          <TasksTab
+            apiKey={state.apiKey || ''}
           />
         );
 

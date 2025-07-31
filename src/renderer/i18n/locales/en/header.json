@@ -2,7 +2,8 @@
   "tabs": {
     "chatbot": "Chatbot",
     "file_translation": "File Translation",
-    "glossaries": "Glossaries"
+    "glossaries": "Glossaries",
+    "tasks": "Tasks"
   },
   "token_balance": "{{balance}} tokens",
   "settings": "Settings",

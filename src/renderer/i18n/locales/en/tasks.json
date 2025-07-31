@@ -1,0 +1,42 @@
+{
+  "title": "Tasks",
+  "history": "History",
+  "clear_history": "Clear History",
+  "empty_state": {
+    "no_active_tasks": "No active tasks",
+    "no_active_description": "Start a file translation or glossary upload to see progress here",
+    "no_history": "No task history",
+    "loading": "Loading your tasks..."
+  },
+  "task_types": {
+    "file_parsing": "File Parsing",
+    "file_translation": "File Translation",
+    "glossary_generation": "Glossary Generation"
+  },
+  "status": {
+    "pending": "Pending",
+    "processing": "Processing", 
+    "completed": "Completed",
+    "failed": "Failed",
+    "parsed": "Parsed"
+  },
+  "details": {
+    "items": "items",
+    "phase": "Phase",
+    "duration": "Duration",
+    "error": "Error"
+  },
+  "history_table": {
+    "type": "Type",
+    "status": "Status", 
+    "progress": "Progress",
+    "created": "Created",
+    "duration": "Duration"
+  },
+  "messages": {
+    "history_cleared": "History Cleared",
+    "history_cleared_description": "All completed and failed tasks have been removed.",
+    "clear_failed": "Clear Failed",
+    "clear_failed_description": "Failed to clean task history"
+  }
+}

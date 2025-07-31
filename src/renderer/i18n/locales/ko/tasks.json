@@ -1,0 +1,42 @@
+{
+  "title": "작업",
+  "history": "기록",
+  "clear_history": "기록 정리",
+  "empty_state": {
+    "no_active_tasks": "진행 중인 작업 없음",
+    "no_active_description": "파일 번역이나 용어집 업로드를 시작하면 여기에서 진행 상황을 확인할 수 있습니다",
+    "no_history": "작업 기록 없음",
+    "loading": "작업을 불러오는 중..."
+  },
+  "task_types": {
+    "file_parsing": "파일 분석",
+    "file_translation": "파일 번역",
+    "glossary_generation": "용어집 생성"
+  },
+  "status": {
+    "pending": "대기 중",
+    "processing": "처리 중",
+    "completed": "완료됨",
+    "failed": "실패함", 
+    "parsed": "분석됨"
+  },
+  "details": {
+    "items": "항목",
+    "phase": "단계",
+    "duration": "소요시간",
+    "error": "오류"
+  },
+  "history_table": {
+    "type": "유형",
+    "status": "상태",
+    "progress": "진행률",
+    "created": "생성됨",
+    "duration": "소요시간"
+  },
+  "messages": {
+    "history_cleared": "기록이 정리됨",
+    "history_cleared_description": "완료된 작업과 실패한 작업이 모두 제거되었습니다.",
+    "clear_failed": "정리 실패",
+    "clear_failed_description": "작업 기록 정리에 실패했습니다"
+  }
+}

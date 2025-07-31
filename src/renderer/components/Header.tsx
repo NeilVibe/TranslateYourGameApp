@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Layout, Button, Typography, Space, Menu } from 'antd';
-import { SettingOutlined, GlobalOutlined, MessageOutlined, FileTextOutlined, BookOutlined, ThunderboltOutlined, ApiOutlined, CrownOutlined } from '@ant-design/icons';
+import { SettingOutlined, GlobalOutlined, MessageOutlined, FileTextOutlined, BookOutlined, ThunderboltOutlined, ApiOutlined, CrownOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import TokenBalanceModule from './TokenBalanceModule';
 
@@ -40,6 +40,11 @@ const Header: React.FC<HeaderProps> = ({
       key: 'glossaries',
       icon: <BookOutlined />,
       label: t('header:tabs.glossaries')
+    },
+    {
+      key: 'tasks',
+      icon: <BarChartOutlined />,
+      label: t('header:tabs.tasks')
     }
   ];
 

@@ -328,6 +328,66 @@ class APIClient {
     const response = await this.client.get(url);
     return response.data;
   }
+
+  // Task Management API endpoints
+  async getTaskDashboard() {
+    const response = await this.client.get('/tasks/dashboard');
+    return response.data;
+  }
+
+  async getActiveTasks() {
+    const response = await this.client.get('/tasks/active');
+    return response.data;
+  }
+
+  async getTaskHistory(options?: { hours?: number }) {
+    const params = new URLSearchParams();
+    if (options?.hours) params.append('hours', options.hours.toString());
+    
+    const url = `/tasks/history${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await this.client.get(url);
+    return response.data;
+  }
+
+  async getWorkerStatus() {
+    const response = await this.client.get('/tasks/system/workers');
+    return response.data;
+  }
+
+  async adjustWorkerCount(count: number) {
+    const response = await this.client.put('/tasks/system/workers', { count });
+    return response.data;
+  }
+
+  async stopTask(taskId: string) {
+    const response = await this.client.put(`/tasks/${taskId}/stop`);
+    return response.data;
+  }
+
+  async cleanFinishedTasks() {
+    const response = await this.client.delete('/tasks/clean-finished');
+    return response.data;
+  }
+
+  // Generic request method for flexibility
+  async request(endpoint: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', data?: any, params?: any) {
+    const config: any = {};
+    
+    if (params) {
+      config.params = params;
+    }
+    
+    switch (method) {
+      case 'GET':
+        return (await this.client.get(endpoint, config)).data;
+      case 'POST':
+        return (await this.client.post(endpoint, data, config)).data;
+      case 'PUT':
+        return (await this.client.put(endpoint, data, config)).data;
+      case 'DELETE':
+        return (await this.client.delete(endpoint, config)).data;
+    }
+  }
 }
 
 export default new APIClient();

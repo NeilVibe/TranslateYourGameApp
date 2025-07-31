@@ -1,0 +1,42 @@
+{
+  "title": "Tâches",
+  "history": "Historique",
+  "clear_history": "Effacer l'Historique",
+  "empty_state": {
+    "no_active_tasks": "Aucune tâche active",
+    "no_active_description": "Commencez une traduction de fichier ou un téléchargement de glossaire pour voir les progrès ici",
+    "no_history": "Aucun historique de tâches",
+    "loading": "Chargement de vos tâches..."
+  },
+  "task_types": {
+    "file_parsing": "Analyse de Fichier",
+    "file_translation": "Traduction de Fichier", 
+    "glossary_generation": "Génération de Glossaire"
+  },
+  "status": {
+    "pending": "En attente",
+    "processing": "En traitement",
+    "completed": "Terminée",
+    "failed": "Échouée",
+    "parsed": "Analysée"
+  },
+  "details": {
+    "items": "éléments",
+    "phase": "Phase",
+    "duration": "Durée",
+    "error": "Erreur"
+  },
+  "history_table": {
+    "type": "Type",
+    "status": "Statut",
+    "progress": "Progression",
+    "created": "Créée",
+    "duration": "Durée"
+  },
+  "messages": {
+    "history_cleared": "Historique Effacé",
+    "history_cleared_description": "Toutes les tâches terminées et échouées ont été supprimées.",
+    "clear_failed": "Échec de l'Effacement",
+    "clear_failed_description": "Échec de l'effacement de l'historique des tâches"
+  }
+}

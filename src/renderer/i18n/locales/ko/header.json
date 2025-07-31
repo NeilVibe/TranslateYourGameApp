@@ -2,7 +2,8 @@
   "tabs": {
     "chatbot": "챗봇",
     "file_translation": "파일 번역",
-    "glossaries": "글로서리"
+    "glossaries": "글로서리",
+    "tasks": "작업"
   },
   "token_balance": "{{balance}} 토큰",
   "settings": "설정",

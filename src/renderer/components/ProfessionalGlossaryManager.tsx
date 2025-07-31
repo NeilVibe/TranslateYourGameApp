@@ -8,7 +8,7 @@ import {
 import { 
   PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, 
   DownloadOutlined, UploadOutlined, FilterOutlined,
-  CheckOutlined, SaveOutlined, CloseOutlined
+  CheckOutlined, SaveOutlined, CloseOutlined, ExclamationCircleOutlined
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -31,6 +31,9 @@ interface Glossary {
   description: string;
   entry_count: number;
   created_at: string;
+  is_public?: boolean;
+  source_language?: string;
+  target_language?: string;
 }
 
 interface ProfessionalGlossaryManagerProps {
@@ -70,6 +73,10 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   // Create Glossary Modal state
   const [isCreateGlossaryModalVisible, setIsCreateGlossaryModalVisible] = useState(false);
   const [createGlossaryForm] = Form.useForm();
+  
+  // Edit Glossary Modal state
+  const [isEditGlossaryModalVisible, setIsEditGlossaryModalVisible] = useState(false);
+  const [editGlossaryForm] = Form.useForm();
   
   // Embedding search results
   const [embeddingSearchResults, setEmbeddingSearchResults] = useState<GlossaryEntry[]>([]);
@@ -332,6 +339,72 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
       loadGlossaryEntries(selectedGlossary!.id);
     } catch (error) {
       message.error('Failed to delete entries');
+    }
+  };
+
+  // Delete entire glossary
+  const handleDeleteGlossary = async (glossaryToDelete: Glossary) => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/glossaries/${glossaryToDelete.id}`, {
+        method: 'DELETE',
+        headers: { 'X-API-Key': apiKey }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete glossary');
+      }
+      
+      const result = await response.json();
+      message.success(`Deleted glossary "${glossaryToDelete.name}" with ${result.data.entries_deleted} entries`);
+      
+      // Clear selection if we deleted the currently selected glossary
+      if (selectedGlossary?.id === glossaryToDelete.id) {
+        setSelectedGlossary(null);
+        setEntries([]);
+      }
+      
+      // Reload glossaries list
+      loadGlossaries();
+    } catch (error) {
+      console.error('Error deleting glossary:', error);
+      message.error(`Failed to delete glossary: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  // Rename/update glossary
+  const handleUpdateGlossary = async (values: any) => {
+    if (!selectedGlossary) return;
+    
+    try {
+      const response = await fetch(`${apiBaseUrl}/glossaries/${selectedGlossary.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey
+        },
+        body: JSON.stringify({
+          name: values.name,
+          description: values.description || ''
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update glossary');
+      }
+      
+      const result = await response.json();
+      message.success(`Updated glossary "${values.name}"`);
+      
+      // Update local state
+      setSelectedGlossary(result.data);
+      
+      // Reload glossaries list to reflect changes
+      loadGlossaries();
+    } catch (error) {
+      console.error('Error updating glossary:', error);
+      message.error(`Failed to update glossary: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -641,6 +714,50 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
           Add New Glossary
         </Button>
         
+        {/* Edit and Delete Glossary Buttons - only show when glossary is selected */}
+        {selectedGlossary && (
+          <>
+            <Button 
+              icon={<EditOutlined />}
+              onClick={() => {
+                editGlossaryForm.setFieldsValue({
+                  name: selectedGlossary.name,
+                  description: selectedGlossary.description || ''
+                });
+                setIsEditGlossaryModalVisible(true);
+              }}
+              size="large"
+              style={{ 
+                fontWeight: 'bold',
+                background: '#3b82f6',
+                borderColor: '#3b82f6',
+                color: 'white'
+              }}
+            >
+              Edit Glossary
+            </Button>
+            
+            <Popconfirm
+              title={`Delete "${selectedGlossary.name}"?`}
+              description={`This will permanently delete the glossary and all ${selectedGlossary.entry_count} entries. This action cannot be undone.`}
+              onConfirm={() => handleDeleteGlossary(selectedGlossary)}
+              okText="Delete"
+              cancelText="Cancel"
+              okType="danger"
+              icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
+            >
+              <Button 
+                danger
+                icon={<DeleteOutlined />}
+                size="large"
+                style={{ fontWeight: 'bold' }}
+              >
+                Delete Glossary
+              </Button>
+            </Popconfirm>
+          </>
+        )}
+        
         {selectedGlossary && (
           <Text style={{ color: '#8b5cf6', fontSize: '14px', fontWeight: 'bold' }}>
             Total: {entries.length} entries
@@ -899,6 +1016,76 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
                 }}
               >
                 Create Glossary
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Edit Glossary Modal */}
+      <Modal
+        title="Edit Glossary"
+        open={isEditGlossaryModalVisible}
+        onCancel={() => {
+          setIsEditGlossaryModalVisible(false);
+          editGlossaryForm.resetFields();
+        }}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={editGlossaryForm}
+          layout="vertical"
+          onFinish={(values) => {
+            handleUpdateGlossary(values);
+            setIsEditGlossaryModalVisible(false);
+          }}
+        >
+          <Form.Item
+            name="name"
+            label="Glossary Name"
+            rules={[
+              { required: true, message: 'Please enter glossary name' },
+              { min: 2, message: 'Name must be at least 2 characters' },
+              { max: 100, message: 'Name must be less than 100 characters' }
+            ]}
+          >
+            <Input 
+              placeholder="e.g., Game UI Terms, Character Names, etc."
+              size="large"
+            />
+          </Form.Item>
+          
+          <Form.Item
+            name="description"
+            label="Description (Optional)"
+          >
+            <Input.TextArea 
+              rows={3} 
+              placeholder="Brief description of this glossary..."
+              showCount
+              maxLength={500}
+            />
+          </Form.Item>
+          
+          <Form.Item style={{ marginBottom: 0 }}>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button onClick={() => {
+                setIsEditGlossaryModalVisible(false);
+                editGlossaryForm.resetFields();
+              }}>
+                Cancel
+              </Button>
+              <Button 
+                type="primary" 
+                htmlType="submit"
+                loading={loading}
+                style={{ 
+                  background: '#3b82f6', 
+                  borderColor: '#3b82f6' 
+                }}
+              >
+                Update Glossary
               </Button>
             </Space>
           </Form.Item>
