@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Progress, Typography } from 'antd';
+import { Card, Progress, Typography, Button } from 'antd';
 import { 
   FileTextOutlined,
   CheckCircleOutlined,
@@ -8,7 +8,8 @@ import {
   DatabaseOutlined,
   SyncOutlined,
   CheckOutlined,
-  BookOutlined
+  BookOutlined,
+  CloseOutlined
 } from '@ant-design/icons';
 import './TaskFlowchart.css';
 
@@ -33,8 +34,12 @@ interface TaskFlowchartProps {
   itemsTotal?: number;
   processingSpeed?: number;
   estimatedTime?: number;
-  taskType?: 'glossary_upload' | 'file_translation';
+  taskType?: 'glossary_upload' | 'file_translation' | 'smart_translation';
   steps?: FlowchartStep[];
+  onCancel?: () => void;
+  showCancelButton?: boolean;
+  errorMessage?: string;
+  successMessage?: string;
 }
 
 const TaskFlowchart: React.FC<TaskFlowchartProps> = ({
@@ -48,7 +53,11 @@ const TaskFlowchart: React.FC<TaskFlowchartProps> = ({
   processingSpeed,
   estimatedTime,
   taskType = 'glossary_upload',
-  steps
+  steps,
+  onCancel,
+  showCancelButton = true,
+  errorMessage,
+  successMessage
 }) => {
   // Define the steps based on progress and task type
   const getSteps = (): FlowchartStep[] => {
@@ -109,6 +118,68 @@ const TaskFlowchart: React.FC<TaskFlowchartProps> = ({
           status: progress >= 100 ? 'completed' : progress > 30 ? 'active' : 'pending',
           progress: progress >= 100 ? 100 : progress > 30 ? ((progress - 30) / 70) * 100 : 0,
           description: currentItem || 'Processing entries'
+        }
+      ];
+    }
+    
+    // Steps for smart translation (13-phase dynamic glossary + translation)
+    if (taskType === 'smart_translation') {
+      return [
+        {
+          id: 'cluster',
+          name: 'Clustering',
+          icon: <DatabaseOutlined />,
+          status: progress > 10 ? 'completed' : progress >= 0 ? 'active' : 'pending',
+          progress: progress >= 10 ? 100 : progress >= 0 ? (progress / 10) * 100 : 0,
+          description: 'Stage 1: Cluster preprocessing'
+        },
+        {
+          id: 'char_2_3',
+          name: '2-3 Chars',
+          icon: <RobotOutlined />,
+          status: progress > 25 ? 'completed' : progress >= 10 ? 'active' : 'pending',
+          progress: progress >= 25 ? 100 : progress >= 10 ? ((progress - 10) / 15) * 100 : 0,
+          description: 'Processing short candidates'
+        },
+        {
+          id: 'char_4_6',
+          name: '4-6 Chars',
+          icon: <RobotOutlined />,
+          status: progress > 40 ? 'completed' : progress >= 25 ? 'active' : 'pending',
+          progress: progress >= 40 ? 100 : progress >= 25 ? ((progress - 25) / 15) * 100 : 0,
+          description: 'Processing medium candidates'
+        },
+        {
+          id: 'char_7_10',
+          name: '7-10 Chars',
+          icon: <RobotOutlined />,
+          status: progress > 55 ? 'completed' : progress >= 40 ? 'active' : 'pending',
+          progress: progress >= 55 ? 100 : progress >= 40 ? ((progress - 40) / 15) * 100 : 0,
+          description: 'Processing longer candidates'
+        },
+        {
+          id: 'char_long',
+          name: 'Long Phrases',
+          icon: <RobotOutlined />,
+          status: progress > 70 ? 'completed' : progress >= 55 ? 'active' : 'pending',
+          progress: progress >= 70 ? 100 : progress >= 55 ? ((progress - 55) / 15) * 100 : 0,
+          description: 'Processing complex phrases'
+        },
+        {
+          id: 'validation',
+          name: 'Validation',
+          icon: <CheckCircleOutlined />,
+          status: progress >= 85 ? 'completed' : progress >= 70 ? 'active' : 'pending',
+          progress: progress >= 85 ? 100 : progress >= 70 ? ((progress - 70) / 15) * 100 : 0,
+          description: 'Final validation & FAISS refresh'
+        },
+        {
+          id: 'translation',
+          name: 'Translation',
+          icon: <SyncOutlined />,
+          status: progress >= 100 ? 'completed' : progress >= 85 ? 'active' : 'pending',
+          progress: progress >= 100 ? 100 : progress >= 85 ? ((progress - 85) / 15) * 100 : 0,
+          description: currentItem || 'Translating with dynamic glossary'
         }
       ];
     }
@@ -210,7 +281,29 @@ const TaskFlowchart: React.FC<TaskFlowchartProps> = ({
 
   return (
     <Card className="flowchart-task-card">
-      <Title level={4}>📚 {taskName}: {fileName}</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={4} style={{ margin: 0 }}>📚 {taskName}: {fileName}</Title>
+        {/* Cancel Button - ALWAYS VISIBLE but disabled when not applicable */}
+        <Button 
+          type={showCancelButton && onCancel ? "primary" : "default"}
+          danger={!!(showCancelButton && onCancel)}
+          size="large"
+          onClick={onCancel}
+          disabled={!showCancelButton || !onCancel}
+          icon={<CloseOutlined />}
+          style={{ 
+            minWidth: 140,
+            height: 40,
+            fontSize: 16,
+            fontWeight: 600,
+            boxShadow: showCancelButton && onCancel ? '0 2px 8px rgba(255, 77, 79, 0.3)' : 'none',
+            opacity: showCancelButton && onCancel ? 1 : 0.5,
+            cursor: showCancelButton && onCancel ? 'pointer' : 'not-allowed'
+          }}
+        >
+          Cancel Task
+        </Button>
+      </div>
       
       <div className="flowchart-container">
         {computedSteps.map((step, idx) => (
@@ -259,6 +352,36 @@ const TaskFlowchart: React.FC<TaskFlowchartProps> = ({
           </div>
         )}
       </div>
+      
+      {/* Error Message */}
+      {errorMessage && (
+        <div style={{ 
+          background: 'rgba(239, 68, 68, 0.1)', 
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          borderRadius: '8px',
+          padding: '12px',
+          marginTop: '16px'
+        }}>
+          <Text style={{ color: '#f87171', fontWeight: 500 }}>
+            ❌ Error: {errorMessage}
+          </Text>
+        </div>
+      )}
+      
+      {/* Success Message */}
+      {successMessage && (
+        <div style={{ 
+          background: 'rgba(34, 197, 94, 0.1)', 
+          border: '1px solid rgba(34, 197, 94, 0.3)',
+          borderRadius: '8px',
+          padding: '12px',
+          marginTop: '16px'
+        }}>
+          <Text style={{ color: '#4ade80', fontWeight: 500 }}>
+            ✅ {successMessage}
+          </Text>
+        </div>
+      )}
     </Card>
   );
 };

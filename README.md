@@ -2,8 +2,6 @@
 
 **Enterprise-grade game localization** powered by AI translation with bulletproof security and automatic updates.
 
-**Contact:** contact@translateyourgame.com
-
 ---
 **© 2025 Neil Schmitt. All Rights Reserved. Proprietary Software.**
 ---
