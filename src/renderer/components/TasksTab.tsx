@@ -92,7 +92,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
 
   const loadTaskHistory = async () => {
     try {
-      const response = await apiClient.getTaskHistory({ hours: 24 });
+      const response = await apiClient.getTaskHistory(24);
       setTaskHistory(response.data.history || []);
     } catch (error) {
       console.error('Error loading task history:', error);

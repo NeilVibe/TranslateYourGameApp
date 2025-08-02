@@ -114,24 +114,6 @@ class APIClient {
     return response.data;
   }
 
-  // Unified file translation endpoint (matches glossary upload pattern)
-  async translateFileImmediate(file: File, sourceLang: string, targetLang: string, translationMode: 'simple' | 'smart' = 'simple', useGlossaries: boolean = false, glossaryIds: number[] = []) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('source_lang', sourceLang);
-    formData.append('target_lang', targetLang);
-    formData.append('translation_mode', translationMode);
-    formData.append('use_glossaries', useGlossaries.toString());
-    glossaryIds.forEach(id => formData.append('glossary_ids[]', id.toString()));
-
-    const response = await this.client.post('/file-translation/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  }
-
   // File upload and translation (real file upload with glossary mode support)
   async uploadAndTranslateFile(file: File, sourceLang: string, targetLang: string, glossaryIds: number[] = [], glossaryMode: string = 'existing') {
     const formData = new FormData();
@@ -347,64 +329,29 @@ class APIClient {
     return response.data;
   }
 
-  // Task Management API endpoints
-  async getTaskDashboard() {
-    const response = await this.client.get('/tasks/dashboard');
-    return response.data;
-  }
-
+  // Task management methods
   async getActiveTasks() {
     const response = await this.client.get('/tasks/active');
     return response.data;
   }
 
-  async getTaskHistory(options?: { hours?: number }) {
+  async getTaskHistory(limit?: number) {
     const params = new URLSearchParams();
-    if (options?.hours) params.append('hours', options.hours.toString());
+    if (limit) params.append('limit', limit.toString());
     
     const url = `/tasks/history${params.toString() ? '?' + params.toString() : ''}`;
     const response = await this.client.get(url);
     return response.data;
   }
 
-  async getWorkerStatus() {
-    const response = await this.client.get('/tasks/system/workers');
-    return response.data;
-  }
-
-  async adjustWorkerCount(count: number) {
-    const response = await this.client.put('/tasks/system/workers', { count });
-    return response.data;
-  }
-
-  async stopTask(taskId: string) {
-    const response = await this.client.put(`/tasks/${taskId}/stop`);
-    return response.data;
-  }
-
   async cleanFinishedTasks() {
-    const response = await this.client.delete('/tasks/clean-finished');
+    const response = await this.client.post('/tasks/clean-finished');
     return response.data;
   }
 
-  // Generic request method for flexibility
-  async request(endpoint: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', data?: any, params?: any) {
-    const config: any = {};
-    
-    if (params) {
-      config.params = params;
-    }
-    
-    switch (method) {
-      case 'GET':
-        return (await this.client.get(endpoint, config)).data;
-      case 'POST':
-        return (await this.client.post(endpoint, data, config)).data;
-      case 'PUT':
-        return (await this.client.put(endpoint, data, config)).data;
-      case 'DELETE':
-        return (await this.client.delete(endpoint, config)).data;
-    }
+  async cancelTask(taskId: string) {
+    const response = await this.client.post(`/tasks/${taskId}/cancel`);
+    return response.data;
   }
 }
 
