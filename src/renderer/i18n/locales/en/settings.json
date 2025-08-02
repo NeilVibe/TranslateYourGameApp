@@ -29,7 +29,7 @@
     "description": "Access your profile, billing, usage statistics, and account settings on the web dashboard.",
     "open_button": "Open My Profile",
     "web_features_title": "Available on Web Profile:",
-    "web_features_desc": "• Update profile information & password\n• View detailed usage statistics & billing\n• Manage API keys & subscription\n• Download invoices & usage reports"
+    "web_features_desc": "• Update profile information\n• View detailed usage statistics & billing\n• Manage API keys & subscription\n• Download invoices & usage reports"
   },
   "language": {
     "title": "Language Preferences",

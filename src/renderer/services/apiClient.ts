@@ -320,14 +320,6 @@ class APIClient {
     return response.data;
   }
 
-  // Change password
-  async changePassword(currentPassword: string, newPassword: string) {
-    const response = await this.client.post('/auth/change-password', {
-      current_password: currentPassword,
-      new_password: newPassword
-    });
-    return response.data;
-  }
 
   // Update profile
   async updateProfile(data: { username?: string; email?: string; company?: string }) {
