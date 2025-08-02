@@ -122,6 +122,25 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
     }
   };
 
+  const handleCancelTask = async (taskId: string) => {
+    try {
+      await apiClient.cancelTask(taskId);
+      notification.success({
+        message: 'Task Cancelled',
+        description: 'The task has been cancelled successfully.',
+        placement: 'topRight'
+      });
+      // Refresh active tasks to show updated status
+      await loadActiveTasks();
+    } catch (error: any) {
+      notification.error({
+        message: 'Cancel Failed',
+        description: error.message || 'Failed to cancel task',
+        placement: 'topRight'
+      });
+    }
+  };
+
   const getTaskTypeIcon = (taskType: string) => {
     switch (taskType) {
       case 'file_parsed':
@@ -194,249 +213,49 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
   };
 
   const renderActiveTask = (task: Task) => {
-    // Use TaskFlowchart for glossary upload tasks
+    // Use TaskFlowchart for ALL tasks - consistent UI
+    const taskTypeMapping: { [key: string]: string } = {
+      'glossary_upload': 'Importing Game Glossary',
+      'translate_file': 'Translating Game File',
+      'translate_file_immediate': 'Translating Game File',
+      'dynamic_glossary_workflow': 'Smart Translation + Dynamic Glossary',
+      'dynamic_glossary_generation': 'Smart Translation - Dynamic Glossary Generation',
+      'file_parsed': 'Parsing File',
+      'generate_glossary': 'Generating Dynamic Glossary',
+    };
+    
+    const taskName = taskTypeMapping[task.task_type] || getTaskTypeLabel(task.task_type);
+    
+    // Determine appropriate taskType for TaskFlowchart
+    let taskType: 'glossary_upload' | 'file_translation' | 'smart_translation' | undefined;
     if (task.task_type === 'glossary_upload') {
-      return (
-        <div key={task.id} style={{ marginBottom: '20px' }}>
-          <TaskFlowchart
-            taskName="Importing Game Glossary"
-            fileName={task.input_data?.original_filename || task.input_data?.filename || 'file'}
-            currentPhase={task.current_phase || 'Processing'}
-            currentItem={task.current_item_text}
-            progress={task.progress || 0}
-            itemsCompleted={task.items_completed}
-            itemsTotal={task.items_total}
-            processingSpeed={task.processing_speed}
-            estimatedTime={task.estimated_time_remaining}
-            taskType="glossary_upload"
-          />
-        </div>
-      );
+      taskType = 'glossary_upload';
+    } else if (task.task_type === 'translate_file' || task.task_type === 'translate_file_immediate') {
+      taskType = 'file_translation';
+    } else if (task.task_type === 'dynamic_glossary_workflow' || task.task_type === 'dynamic_glossary_generation') {
+      taskType = 'smart_translation';
     }
     
-    // Use TaskFlowchart for file translation tasks
-    if (task.task_type === 'translate_file' || task.task_type === 'translate_file_immediate') {
-      return (
-        <div key={task.id} style={{ marginBottom: '20px' }}>
-          <TaskFlowchart
-            taskName="Translating Game File"
-            fileName={task.input_data?.original_filename || task.input_data?.filename || 'file'}
-            currentPhase={task.current_phase || 'Processing'}
-            currentItem={task.current_item_text}
-            progress={task.progress || 0}
-            itemsCompleted={task.items_completed}
-            itemsTotal={task.items_total}
-            processingSpeed={task.processing_speed}
-            estimatedTime={task.estimated_time_remaining}
-            taskType="file_translation"
-          />
-        </div>
-      );
-    }
-
-    // Use TaskFlowchart for smart translation with dynamic glossary
-    if (task.task_type === 'dynamic_glossary_workflow') {
-      return (
-        <div key={task.id} style={{ marginBottom: '20px' }}>
-          <TaskFlowchart
-            taskName="Smart Translation + Dynamic Glossary"
-            fileName={task.input_data?.original_filename || task.input_data?.filename || 'file'}
-            currentPhase={task.current_phase || 'Processing'}
-            currentItem={task.current_item_text}
-            progress={task.progress || 0}
-            itemsCompleted={task.items_completed}
-            itemsTotal={task.items_total}
-            processingSpeed={task.processing_speed}
-            estimatedTime={task.estimated_time_remaining}
-            taskType="file_translation"
-          />
-        </div>
-      );
-    }
-
-    // Use regular card for other task types
+    // Use TaskFlowchart for ALL tasks for consistency
     return (
-      <Card
-        key={task.id}
-        style={{
-          marginBottom: '20px',
-          borderLeft: `4px solid ${getStatusColor(task.status)}`,
-          background: 'linear-gradient(135deg, #16213e 0%, #1e2749 100%)',
-          borderRadius: '12px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-        }}
-        bodyStyle={{ padding: '24px' }}
-      >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
-        {/* Task Icon */}
-        <div style={{ 
-          fontSize: '32px', 
-          color: getStatusColor(task.status),
-          marginTop: '4px',
-          minWidth: '32px'
-        }}>
-          {task.status === 'processing' ? (
-            <LoadingOutlined spin />
-          ) : (
-            getTaskTypeIcon(task.task_type)
-          )}
-        </div>
-
-        {/* Task Content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Task Title */}
-          <div style={{ marginBottom: '16px' }}>
-            <Title level={3} style={{ 
-              margin: 0, 
-              color: '#e2e8f0',
-              fontSize: '20px',
-              fontWeight: 600
-            }}>
-              {getTaskDisplayName(task)}
-            </Title>
-            {task.input_data?.original_filename && (
-              <Text style={{ color: '#8b5cf6', fontSize: '14px', display: 'block', marginTop: '4px' }}>
-                File: {task.input_data.original_filename}
-              </Text>
-            )}
-          </div>
-
-          {/* Progress Bar with Better Styling */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <Text style={{ color: '#a0aec0', fontSize: '14px', fontWeight: 500 }}>
-                Progress: {Math.round(task.progress)}% complete
-              </Text>
-              {task.processing_speed && task.processing_speed > 0 && (
-                <Text style={{ color: '#10b981', fontSize: '14px' }}>
-                  {task.processing_speed.toFixed(1)} items/sec
-                </Text>
-              )}
-            </div>
-            <Progress
-              percent={Math.round(task.progress)}
-              strokeColor={{
-                '0%': getStatusColor(task.status),
-                '100%': '#8b5cf6',
-              }}
-              trailColor="#2d3748"
-              strokeWidth={8}
-              showInfo={false}
-            />
-          </div>
-
-          {/* Current Activity - THE KEY FIX! */}
-          {task.current_item_text && (
-            <div style={{ 
-              background: 'rgba(139, 92, 246, 0.1)', 
-              border: '1px solid rgba(139, 92, 246, 0.3)',
-              borderRadius: '8px',
-              padding: '12px',
-              marginBottom: '16px'
-            }}>
-              <Text style={{ color: '#c4b5fd', fontWeight: 500, fontSize: '14px' }}>
-                Current: {task.current_item_text}
-              </Text>
-            </div>
-          )}
-
-          {/* Task Statistics */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
-            gap: '12px',
-            marginBottom: '12px'
-          }}>
-            {/* Items Progress - FIXED LOGIC */}
-            {task.items_total && task.items_total > 0 && (
-              <div style={{ textAlign: 'center', padding: '8px', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '6px' }}>
-                <Text style={{ color: '#f3f4f6', fontSize: '16px', fontWeight: 600, display: 'block' }}>
-                  {task.items_completed || 0} / {task.items_total}
-                </Text>
-                <Text style={{ color: '#9ca3af', fontSize: '12px' }}>
-                  Items Processed
-                </Text>
-              </div>
-            )}
-
-            {/* Processing Speed */}
-            {task.processing_speed && task.processing_speed > 0 && (
-              <div style={{ textAlign: 'center', padding: '8px', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '6px' }}>
-                <Text style={{ color: '#10b981', fontSize: '16px', fontWeight: 600, display: 'block' }}>
-                  {task.processing_speed.toFixed(1)}/sec
-                </Text>
-                <Text style={{ color: '#9ca3af', fontSize: '12px' }}>
-                  Processing Speed
-                </Text>
-              </div>
-            )}
-
-            {/* ETA */}
-            {task.estimated_time_remaining && task.estimated_time_remaining > 0 && (
-              <div style={{ textAlign: 'center', padding: '8px', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '6px' }}>
-                <Text style={{ color: '#fbbf24', fontSize: '16px', fontWeight: 600, display: 'block' }}>
-                  {formatDuration(task.estimated_time_remaining)}
-                </Text>
-                <Text style={{ color: '#9ca3af', fontSize: '12px' }}>
-                  ETA
-                </Text>
-              </div>
-            )}
-
-            {/* Duration */}
-            {task.processing_time && (
-              <div style={{ textAlign: 'center', padding: '8px', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '6px' }}>
-                <Text style={{ color: '#a0aec0', fontSize: '16px', fontWeight: 600, display: 'block' }}>
-                  {formatDuration(task.processing_time)}
-                </Text>
-                <Text style={{ color: '#9ca3af', fontSize: '12px' }}>
-                  Duration
-                </Text>
-              </div>
-            )}
-          </div>
-
-          {/* Phase Information */}
-          {task.current_phase && (
-            <div style={{ marginTop: '12px' }}>
-              <Text style={{ color: '#8b5cf6', fontSize: '14px', fontWeight: 500 }}>
-                📍 Phase: {task.current_phase}
-              </Text>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {task.error_message && (
-            <div style={{ 
-              background: 'rgba(239, 68, 68, 0.1)', 
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '8px',
-              padding: '12px',
-              marginTop: '12px'
-            }}>
-              <Text style={{ color: '#f87171', fontWeight: 500 }}>
-                ❌ Error: {task.error_message}
-              </Text>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {task.status === 'completed' && task.result_data?.message && (
-            <div style={{ 
-              background: 'rgba(34, 197, 94, 0.1)', 
-              border: '1px solid rgba(34, 197, 94, 0.3)',
-              borderRadius: '8px',
-              padding: '12px',
-              marginTop: '12px'
-            }}>
-              <Text style={{ color: '#4ade80', fontWeight: 500 }}>
-                ✅ {task.result_data.message}
-              </Text>
-            </div>
-          )}
-        </div>
+      <div key={task.id} style={{ marginBottom: '20px' }}>
+        <TaskFlowchart
+          taskName={taskName}
+          fileName={task.input_data?.original_filename || task.input_data?.filename || 'Processing'}
+          currentPhase={task.current_phase || 'Processing'}
+          currentItem={task.current_item_text}
+          progress={task.progress || 0}
+          itemsCompleted={task.items_completed}
+          itemsTotal={task.items_total}
+          processingSpeed={task.processing_speed}
+          taskType={taskType}
+          estimatedTime={task.estimated_time_remaining}
+          onCancel={(task.status === 'processing' || task.status === 'pending') ? () => handleCancelTask(task.id) : undefined}
+          showCancelButton={task.status === 'processing' || task.status === 'pending'}
+          errorMessage={task.error_message}
+          successMessage={task.status === 'completed' && task.result_data?.message}
+        />
       </div>
-    </Card>
     );
   };
 
@@ -525,7 +344,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
         </Button>
       </div>
 
-      {/* Active Tasks */}
+      {/* Active Tasks - SINGLE MAIN CARD */}
       {activeTasks.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: '40px' }}>
           <Empty 
@@ -543,7 +362,50 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
         </Card>
       ) : (
         <div>
-          {activeTasks.map(renderActiveTask)}
+          {/* Show only the MOST RECENT active task to prevent card duplication */}
+          {renderActiveTask(activeTasks[0])}
+          
+          {/* If multiple tasks, show others as small status cards below */}
+          {activeTasks.length > 1 && (
+            <div style={{ marginTop: '16px' }}>
+              <Text style={{ color: '#a0aec0', fontSize: '14px', marginBottom: '12px', display: 'block' }}>
+                {activeTasks.length - 1} other task{activeTasks.length > 2 ? 's' : ''} running in background:
+              </Text>
+              {activeTasks.slice(1).map(task => (
+                <Card 
+                  key={task.id} 
+                  size="small" 
+                  style={{ 
+                    marginBottom: '8px', 
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={{ color: '#e2e8f0' }}>
+                      {getTaskDisplayName(task)}
+                    </Text>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <Progress 
+                        percent={Math.round(task.progress || 0)} 
+                        size="small" 
+                        style={{ minWidth: '100px' }}
+                      />
+                      {(task.status === 'processing' || task.status === 'pending') && (
+                        <Button 
+                          size="small" 
+                          danger 
+                          onClick={() => handleCancelTask(task.id)}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
