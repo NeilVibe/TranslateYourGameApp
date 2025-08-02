@@ -339,16 +339,12 @@ const TaskFlowchart: React.FC<TaskFlowchartProps> = ({
             '100%': '#87d068',
           }}
         />
-        {processingSpeed && estimatedTime && (
+        {/* ETA/Speed removed - calculations were inaccurate and misleading */}
+        {itemsCompleted && itemsTotal && (
           <div className="progress-stats">
             <Text type="secondary">
-              Speed: {processingSpeed.toFixed(1)} entries/sec • ETA: {estimatedTime}s
+              {itemsCompleted}/{itemsTotal} entries processed
             </Text>
-            {itemsCompleted && itemsTotal && (
-              <Text type="secondary">
-                {itemsCompleted}/{itemsTotal} entries processed
-              </Text>
-            )}
           </div>
         )}
       </div>

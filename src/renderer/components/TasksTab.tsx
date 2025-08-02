@@ -362,50 +362,25 @@ const TasksTab: React.FC<TasksTabProps> = ({ apiKey }) => {
         </Card>
       ) : (
         <div>
-          {/* Show only the MOST RECENT active task to prevent card duplication */}
-          {renderActiveTask(activeTasks[0])}
+          {/* Show unified workflow task - combine related tasks into single card */}
+          {(() => {
+            // Group related workflow tasks
+            const workflowTasks = activeTasks.filter(task => 
+              task.task_type === 'dynamic_glossary_workflow' || 
+              task.task_type === 'dynamic_glossary_generation'
+            );
+            
+            if (workflowTasks.length > 0) {
+              // Show the most advanced workflow task (prefer workflow over generation)
+              const mainTask = workflowTasks.find(t => t.task_type === 'dynamic_glossary_workflow') || workflowTasks[0];
+              return renderActiveTask(mainTask);
+            } else {
+              // Show first non-workflow task
+              return renderActiveTask(activeTasks[0]);
+            }
+          })()}
           
-          {/* If multiple tasks, show others as small status cards below */}
-          {activeTasks.length > 1 && (
-            <div style={{ marginTop: '16px' }}>
-              <Text style={{ color: '#a0aec0', fontSize: '14px', marginBottom: '12px', display: 'block' }}>
-                {activeTasks.length - 1} other task{activeTasks.length > 2 ? 's' : ''} running in background:
-              </Text>
-              {activeTasks.slice(1).map(task => (
-                <Card 
-                  key={task.id} 
-                  size="small" 
-                  style={{ 
-                    marginBottom: '8px', 
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={{ color: '#e2e8f0' }}>
-                      {getTaskDisplayName(task)}
-                    </Text>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <Progress 
-                        percent={Math.round(task.progress || 0)} 
-                        size="small" 
-                        style={{ minWidth: '100px' }}
-                      />
-                      {(task.status === 'processing' || task.status === 'pending') && (
-                        <Button 
-                          size="small" 
-                          danger 
-                          onClick={() => handleCancelTask(task.id)}
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
+          {/* Background task window removed - user wants single unified task window only */}
         </div>
       )}
 
