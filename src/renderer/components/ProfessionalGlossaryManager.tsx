@@ -854,7 +854,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
             loading={loading}
             rowSelection={rowSelection}
             pagination={false}
-            scroll={{ y: 600 }}
+            scroll={{ y: 'calc(100vh - 400px)' }}
             onScroll={handleTableScroll}
             style={{
               background: '#1a1a1a',
