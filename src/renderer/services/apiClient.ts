@@ -360,7 +360,7 @@ class APIClient {
   }
 
   async cancelTask(taskId: string) {
-    const response = await this.client.post(`/tasks/${taskId}/cancel`);
+    const response = await this.client.delete(`/tasks/${taskId}`);
     return response.data;
   }
 }
