@@ -166,6 +166,7 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
       if (data.status === 'success' && data.data) {
         const entriesWithMetadata = (data.data.entries || []).map((entry: GlossaryEntry) => ({
           ...entry,
+          id: parseInt(String(entry.id).replace(/^(whole_|line_)/, ''), 10) || entry.id, // Extract numeric ID from prefixed IDs
           character_count: entry.source_text.length,
           is_line_entry: entry.entry_type === 'line' // Use actual entry type from API
         }));
@@ -677,7 +678,14 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
   };
 
   return (
-    <div style={{ padding: '24px', background: '#0f0f0f', minHeight: '100vh' }}>
+    <div style={{ 
+      height: '100vh', 
+      background: '#0f0f0f', 
+      display: 'flex', 
+      flexDirection: 'column',
+      overflow: 'hidden',
+      padding: '16px'
+    }}>
       {/* Compact Glossary Selector with Add New Button */}
       <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
         <Select
@@ -760,9 +768,9 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
       </div>
 
       {selectedGlossary && (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'auto' }}>
           {/* Search and Controls */}
-          <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
             <Input
               placeholder={t('glossary:placeholders.search_entries')}
               value={searchText}
@@ -846,21 +854,23 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
             </div>
           )}
 
-          {/* Data Table */}
-          <Table
-            columns={columns}
-            dataSource={processedEntries}
-            rowKey="id"
-            loading={loading}
-            rowSelection={rowSelection}
-            pagination={false}
-            scroll={{ y: 'calc(100vh - 400px)' }}
-            onScroll={handleTableScroll}
-            style={{
-              background: '#1a1a1a',
-              borderRadius: '8px'
-            }}
-            className="professional-glossary-table"
+          {/* Data Table - Flexible height container */}
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <Table
+              columns={columns}
+              dataSource={processedEntries}
+              rowKey="id"
+              loading={loading}
+              rowSelection={rowSelection}
+              pagination={false}
+              scroll={{ y: 'calc(100vh - 350px)' }}
+              onScroll={handleTableScroll}
+              style={{
+                background: '#1a1a1a',
+                borderRadius: '8px',
+                height: '100%'
+              }}
+              className="professional-glossary-table"
             locale={{
               emptyText: searchText ? (
                 <div style={{ color: '#666', padding: '40px' }}>
@@ -879,8 +889,9 @@ const ProfessionalGlossaryManager: React.FC<ProfessionalGlossaryManagerProps> = 
                 </div>
               )
             }}
-          />
-        </>
+            />
+          </div>
+        </div>
       )}
 
       {/* Enhanced Add/Edit Modal */}
