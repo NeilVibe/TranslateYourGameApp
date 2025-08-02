@@ -363,7 +363,7 @@ class APIClient {
   }
 
   async cleanFinishedTasks() {
-    const response = await this.client.post('/tasks/clean-finished');
+    const response = await this.client.delete('/tasks/clean-finished');
     return response.data;
   }
 
