@@ -72,7 +72,20 @@ export const webAPI = {
   },
 
   openExternal: (url: string): Promise<void> => {
-    window.open(url, '_blank');
+    try {
+      // Try window.open first (opens in new tab)
+      const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+      
+      // If window.open was blocked (returns null), use location.href as fallback
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // Fallback: navigate current window
+        window.location.href = url;
+      }
+    } catch (error) {
+      // If all else fails, use location.href
+      console.warn('window.open failed, using location.href fallback:', error);
+      window.location.href = url;
+    }
     return Promise.resolve();
   },
 
