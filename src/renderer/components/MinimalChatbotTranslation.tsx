@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, Space, Typography, message, Select, Divider } from 'antd';
+import { Input, Button, Space, Typography, message, Select, Divider, Modal, Card, Tag, Row, Col } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { SendOutlined, CopyOutlined, SwapOutlined, DeleteOutlined, LoadingOutlined } from '@ant-design/icons';
+import { SendOutlined, CopyOutlined, SwapOutlined, DeleteOutlined, LoadingOutlined, BookOutlined, CheckOutlined, ReloadOutlined } from '@ant-design/icons';
 import apiClient from '../services/apiClient';
 
 const { TextArea } = Input;
@@ -26,6 +26,8 @@ interface TranslationExchange {
   targetLanguage: string;
   timestamp: Date;
   tokensUsed?: number;
+  provider?: string;
+  model?: string;
   glossaryInfo?: {
     used_glossaries: number[];
     matches_found: number;
@@ -49,6 +51,9 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
   const [exchanges, setExchanges] = useState<TranslationExchange[]>([]);
   const [glossaries, setGlossaries] = useState<any[]>([]);
   const [isEmbeddingModelLoading, setIsEmbeddingModelLoading] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<string>('qwen');
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [glossaryModalVisible, setGlossaryModalVisible] = useState(false);
   const inputRef = useRef<any>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -65,23 +70,61 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
 
   useEffect(() => {
     loadGlossaries();
+    loadModelSettings();
   }, []);
+
+  // Reload glossaries when API key changes
+  useEffect(() => {
+    if (apiKey) {
+      loadGlossaries();
+    }
+  }, [apiKey]);
+  
+  const loadModelSettings = () => {
+    const savedProvider = localStorage.getItem('selectedProvider') || 'qwen';
+    const savedModel = localStorage.getItem('selectedModel') || 'qwen-mt-turbo';
+    setSelectedProvider(savedProvider);
+    setSelectedModel(savedModel);
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [exchanges]);
 
+  // Listen for model settings changes from Settings modal
+  useEffect(() => {
+    const handleStorageChange = () => {
+      loadModelSettings();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Also listen for custom events (in case localStorage is changed within the same window)
+    window.addEventListener('modelSettingsChanged', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('modelSettingsChanged', handleStorageChange);
+    };
+  }, []);
+
   const loadGlossaries = async () => {
-    if (!apiKey) return;
+    if (!apiKey) {
+      setGlossaries([]);
+      return;
+    }
     
     try {
       apiClient.setApiKey(apiKey);
       const response = await apiClient.getGlossaries();
       if (response.status === 'success') {
         setGlossaries(response.data.glossaries || []);
+      } else {
+        console.error('Failed to load glossaries:', response.message);
+        setGlossaries([]);
       }
     } catch (error) {
       console.error('Failed to load glossaries:', error);
+      setGlossaries([]);
     }
   };
 
@@ -98,11 +141,14 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
     try {
       apiClient.setApiKey(apiKey);
       // Extended timeout to 3 minutes (180 seconds)
+      console.log(`Frontend sending: provider=${selectedProvider}, model=${selectedModel}`);
       const response = await apiClient.translateSingle({
         text: inputText.trim(),
         source_lang: sourceLanguage,
         target_lang: targetLanguage,
-        glossary_ids: selectedGlossaries
+        glossary_ids: selectedGlossaries,
+        provider: selectedProvider,
+        model: selectedModel
       }, 180000);
 
       const newExchange: TranslationExchange = {
@@ -113,6 +159,8 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
         targetLanguage,
         timestamp: new Date(),
         tokensUsed: response.data.tokens_used,
+        provider: selectedProvider,
+        model: selectedModel,
         glossaryInfo: {
           used_glossaries: selectedGlossaries,
           matches_found: response.data.glossaries_used || 0,
@@ -203,26 +251,25 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
             ))}
           </Select>
 
-          <Select
-            mode="multiple"
-            placeholder={t('chatbot:glossary_placeholder')}
-            value={selectedGlossaries}
-            onChange={onSelectedGlossariesChange}
+          <Button
+            icon={<BookOutlined />}
+            onClick={() => setGlossaryModalVisible(true)}
             style={{ 
-              minWidth: 250, 
-              maxWidth: 400,
-              flex: 1
+              minWidth: 200,
+              textAlign: 'left',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
             }}
             size="middle"
-            maxTagCount="responsive"
-            showSearch
           >
-            {glossaries.map(glossary => (
-              <Option key={glossary.id} value={glossary.id}>
-                {glossary.name} ({glossary.entry_count} entries)
-              </Option>
-            ))}
-          </Select>
+            <span>
+              {selectedGlossaries.length > 0 
+                ? `${selectedGlossaries.length} glossaries selected`
+                : 'Select glossaries'
+              }
+            </span>
+          </Button>
 
           <Button 
             type="text" 
@@ -358,6 +405,11 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
                   <div>
                     <strong>Tokens:</strong> {exchange.tokensUsed}
                   </div>
+                  {(exchange.provider || exchange.model) && (
+                    <div>
+                      <strong>Model:</strong> {exchange.provider && exchange.model ? `${exchange.provider}:${exchange.model}` : exchange.provider || exchange.model}
+                    </div>
+                  )}
                 </div>
                 {exchange.glossaryInfo.used_glossaries.length > 0 && (
                   <div style={{ marginTop: '8px' }}>
@@ -412,6 +464,132 @@ const MinimalChatbotTranslation: React.FC<MinimalChatbotTranslationProps> = ({
           />
         </div>
       </div>
+
+      {/* Glossary Selection Modal */}
+      <Modal
+        title={
+          <Space>
+            <BookOutlined />
+            Select Glossaries
+            <Button 
+              type="text" 
+              size="small" 
+              icon={<ReloadOutlined />} 
+              onClick={loadGlossaries}
+              title="Refresh glossaries"
+            />
+          </Space>
+        }
+        open={glossaryModalVisible}
+        onCancel={() => setGlossaryModalVisible(false)}
+        width={700}
+        footer={null}
+        styles={{
+          body: { maxHeight: '60vh', overflowY: 'auto' }
+        }}
+      >
+        <div style={{ padding: '16px 0' }}>
+          {glossaries.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+              <BookOutlined style={{ fontSize: '48px', marginBottom: '16px' }} />
+              <div>No glossaries available</div>
+              <div style={{ fontSize: '14px', marginTop: '8px' }}>
+                Create glossaries in Settings to improve translation accuracy
+              </div>
+            </div>
+          ) : (
+            <Row gutter={[12, 12]}>
+              {glossaries.map(glossary => (
+                <Col span={24} key={glossary.id}>
+                  <Card
+                    size="small"
+                    style={{
+                      cursor: 'pointer',
+                      border: selectedGlossaries.includes(glossary.id) 
+                        ? '2px solid #52c41a' 
+                        : '1px solid #d9d9d9',
+                      backgroundColor: selectedGlossaries.includes(glossary.id)
+                        ? '#f6ffed'
+                        : 'white'
+                    }}
+                    onClick={() => {
+                      const isSelected = selectedGlossaries.includes(glossary.id);
+                      if (isSelected) {
+                        onSelectedGlossariesChange(selectedGlossaries.filter(id => id !== glossary.id));
+                      } else {
+                        onSelectedGlossariesChange([...selectedGlossaries, glossary.id]);
+                      }
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '8px',
+                          marginBottom: '4px'
+                        }}>
+                          <Text strong style={{ fontSize: '16px' }}>
+                            {glossary.name}
+                          </Text>
+                          {selectedGlossaries.includes(glossary.id) && (
+                            <Tag color="success" icon={<CheckOutlined />}>
+                              Selected
+                            </Tag>
+                          )}
+                        </div>
+                        <Text type="secondary" style={{ fontSize: '14px' }}>
+                          {glossary.entry_count} entries
+                        </Text>
+                        {glossary.description && (
+                          <div style={{ 
+                            marginTop: '8px', 
+                            fontSize: '13px', 
+                            color: '#666',
+                            lineHeight: '1.4'
+                          }}>
+                            {glossary.description}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          )}
+          
+          {selectedGlossaries.length > 0 && (
+            <div style={{ 
+              marginTop: '20px', 
+              padding: '16px', 
+              backgroundColor: '#f6ffed', 
+              border: '1px solid #b7eb8f',
+              borderRadius: '6px'
+            }}>
+              <Text strong style={{ color: '#52c41a' }}>
+                {selectedGlossaries.length} glossaries selected
+              </Text>
+              <div style={{ marginTop: '8px' }}>
+                <Button 
+                  size="small" 
+                  onClick={() => onSelectedGlossariesChange([])}
+                  style={{ marginRight: '8px' }}
+                >
+                  Clear All
+                </Button>
+                <Button 
+                  type="primary" 
+                  size="small"
+                  onClick={() => setGlossaryModalVisible(false)}
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };

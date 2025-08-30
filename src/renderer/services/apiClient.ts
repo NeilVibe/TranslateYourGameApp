@@ -7,6 +7,8 @@ export interface TranslateRequest {
   source_lang: string;
   target_lang: string;
   glossary_ids?: number[];
+  provider?: string;
+  model?: string;
 }
 
 export interface TranslateBatchRequest {
@@ -361,6 +363,27 @@ class APIClient {
 
   async cancelTask(taskId: string) {
     const response = await this.client.delete(`/tasks/${taskId}`);
+    return response.data;
+  }
+
+  // Generic HTTP methods for direct API calls
+  async get(endpoint: string) {
+    const response = await this.client.get(endpoint);
+    return response.data;
+  }
+
+  async post(endpoint: string, data?: any) {
+    const response = await this.client.post(endpoint, data);
+    return response.data;
+  }
+
+  async put(endpoint: string, data?: any) {
+    const response = await this.client.put(endpoint, data);
+    return response.data;
+  }
+
+  async delete(endpoint: string) {
+    const response = await this.client.delete(endpoint);
     return response.data;
   }
 }

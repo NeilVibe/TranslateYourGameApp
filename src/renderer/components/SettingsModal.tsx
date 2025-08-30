@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Button, Typography, Space, Alert, Tabs, message, Select } from 'antd';
-import { KeyOutlined, GlobalOutlined, UserOutlined, TranslationOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, Button, Typography, Space, Alert, Tabs, message, Select, Card, Tag, Row, Col } from 'antd';
+import { KeyOutlined, GlobalOutlined, UserOutlined, TranslationOutlined, RobotOutlined, ThunderboltOutlined, DollarOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import apiClient from '../services/apiClient';
 import { SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n/types';
@@ -15,6 +15,31 @@ interface SettingsModalProps {
   onSave: (apiKey: string) => void;
 }
 
+interface ModelInfo {
+  name: string;
+  display_name: string;
+  quality: string;
+  speed: string;
+  cost: string;
+}
+
+interface ModelsResponse {
+  providers: {
+    claude: {
+      name: string;
+      models: Record<string, ModelInfo>;
+    };
+    qwen: {
+      name: string;
+      models: Record<string, ModelInfo>;
+    };
+  };
+  defaults: {
+    claude: string;
+    qwen: string;
+  };
+}
+
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
   visible,
@@ -26,13 +51,198 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [apiForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('api');
+  const [models, setModels] = useState<ModelsResponse | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<'claude' | 'qwen'>('qwen');
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [modelsLoading, setModelsLoading] = useState(false);
 
   // Update form when API key changes or modal opens
   useEffect(() => {
     if (visible) {
       apiForm.setFieldsValue({ apiKey });
+      loadModels();
     }
   }, [visible, apiKey, apiForm]);
+
+  const loadModels = async () => {
+    console.log('loadModels called with apiKey:', apiKey);
+    if (!apiKey) {
+      console.log('No API key available, skipping model loading');
+      return;
+    }
+    
+    // Check if this is first-time loading
+    const hasLoadedBefore = localStorage.getItem('modelsLoadedBefore') === 'true';
+    
+    setModelsLoading(true);
+    
+    // Show notification for first-time loading
+    if (!hasLoadedBefore) {
+      message.info({
+        content: 'Loading AI models for the first time... This might take a moment.',
+        duration: 4,
+        style: {
+          marginTop: '10vh',
+        }
+      });
+    }
+    
+    try {
+      // Set the API key in the client before making the request
+      apiClient.setApiKey(apiKey);
+      console.log('API key set, making request to /models');
+      const response = await apiClient.get('/models');
+      console.log('Models API response:', response);
+      if (response.status === 'success') {
+        setModels(response.data);
+        console.log('Models loaded successfully:', response.data);
+        
+        // Mark that models have been loaded before
+        localStorage.setItem('modelsLoadedBefore', 'true');
+        
+        // Load saved preferences from localStorage
+        const savedProvider = localStorage.getItem('selectedProvider') as 'claude' | 'qwen' || 'qwen';
+        const savedModel = localStorage.getItem('selectedModel') || '';
+        
+        setSelectedProvider(savedProvider);
+        setSelectedModel(savedModel || response.data.defaults[savedProvider]);
+        
+        // Success message for first-time users
+        if (!hasLoadedBefore) {
+          message.success({
+            content: 'AI models loaded successfully! You can now select your preferred model.',
+            duration: 3,
+            style: {
+              marginTop: '10vh',
+            }
+          });
+        }
+      } else {
+        console.error('Models API returned error:', response);
+        message.error('Failed to load AI models. Please check your API key.');
+      }
+    } catch (error) {
+      console.error('Failed to load models:', error);
+      message.error('Failed to load AI models. Please check your connection and API key.');
+    } finally {
+      setModelsLoading(false);
+    }
+  };
+
+  const handleProviderChange = (provider: 'claude' | 'qwen') => {
+    setSelectedProvider(provider);
+    const defaultModel = models?.defaults[provider] || '';
+    setSelectedModel(defaultModel);
+  };
+
+  const handleModelChange = (modelKey: string) => {
+    setSelectedModel(modelKey);
+  };
+
+  const saveModelSettings = () => {
+    localStorage.setItem('selectedProvider', selectedProvider);
+    localStorage.setItem('selectedModel', selectedModel);
+    message.success('Model settings saved successfully');
+    
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new CustomEvent('modelSettingsChanged'));
+  };
+
+  const getQualityColor = (quality: string) => {
+    switch (quality.toLowerCase()) {
+      case 'maximum': return '#ff4d4f';
+      case 'highest': return '#722ed1';
+      case 'higher': return '#1890ff';
+      case 'high': return '#52c41a';
+      case 'better': return '#faad14';
+      case 'good': return '#13c2c2';
+      default: return '#8c8c8c';
+    }
+  };
+
+  const getSpeedColor = (speed: string) => {
+    switch (speed.toLowerCase()) {
+      case 'very fast': return '#52c41a';
+      case 'fast': return '#1890ff';
+      case 'moderate': return '#faad14';
+      case 'slower': return '#fa8c16';
+      case 'slowest': return '#ff4d4f';
+      default: return '#8c8c8c';
+    }
+  };
+
+  const getCostColor = (cost: string) => {
+    switch (cost.toLowerCase()) {
+      case 'budget': return '#52c41a';
+      case 'affordable': return '#13c2c2';
+      case 'low': return '#1890ff';
+      case 'moderate': return '#faad14';
+      case 'premium': return '#fa8c16';
+      case 'premium+': return '#ff4d4f';
+      case 'expensive': return '#ff4d4f';
+      default: return '#8c8c8c';
+    }
+  };
+
+  const renderModelCard = (modelKey: string, model: ModelInfo, isSelected: boolean) => (
+    <Card
+      key={modelKey}
+      size="small"
+      className={isSelected ? 'selected-model' : ''}
+      hoverable
+      style={{
+        cursor: 'pointer',
+        marginBottom: 12,
+        border: isSelected ? '3px solid #52c41a' : '1px solid #d9d9d9',
+        backgroundColor: isSelected ? '#f6ffed' : undefined,
+        boxShadow: isSelected ? '0 4px 8px rgba(82, 196, 26, 0.3)' : undefined
+      }}
+      onClick={() => handleModelChange(modelKey)}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <Text strong style={{ fontSize: 14 }}>
+              {model.display_name}
+            </Text>
+            {isSelected && (
+              <div style={{
+                backgroundColor: '#52c41a',
+                color: 'white',
+                padding: '2px 8px',
+                borderRadius: 12,
+                fontSize: 10,
+                fontWeight: 'bold'
+              }}>
+                ACTIVE
+              </div>
+            )}
+          </div>
+          <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
+            {model.name}
+          </Text>
+        </div>
+      </div>
+      
+      <Row gutter={8}>
+        <Col span={8}>
+          <Tag color={getQualityColor(model.quality)} icon={<TrophyOutlined />}>
+            {model.quality}
+          </Tag>
+        </Col>
+        <Col span={8}>
+          <Tag color={getSpeedColor(model.speed)} icon={<ThunderboltOutlined />}>
+            {model.speed}
+          </Tag>
+        </Col>
+        <Col span={8}>
+          <Tag color={getCostColor(model.cost)} icon={<DollarOutlined />}>
+            {model.cost}
+          </Tag>
+        </Col>
+      </Row>
+    </Card>
+  );
 
   const handleApiKeySubmit = async (values: { apiKey: string }) => {
     setLoading(true);
@@ -205,6 +415,118 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 </Paragraph>
               </div>
             </div>
+          </div>
+        </TabPane>
+
+        <TabPane 
+          tab={
+            <Space>
+              <RobotOutlined />
+              AI Models
+            </Space>
+          } 
+          key="models"
+        >
+          <div style={{ padding: '16px 0' }}>
+            {modelsLoading ? (
+              <Alert
+                message="Loading AI models..."
+                description="First-time loading might take a moment. Please wait while we fetch the available models."
+                type="info"
+                showIcon
+              />
+            ) : !models ? (
+              <Alert
+                message="No models loaded"
+                description="Please ensure you have a valid API key set and try refreshing."
+                type="warning"
+                showIcon
+              />
+            ) : (
+              <>
+                <Alert
+                  message="AI Model Selection"
+                  description={`Current active model: ${selectedProvider.toUpperCase()} - ${models?.providers[selectedProvider]?.models[selectedModel]?.display_name || selectedModel || 'None selected'}`}
+                  type="success"
+                  showIcon
+                  style={{ marginBottom: 24 }}
+                />
+
+                <div style={{ marginBottom: 24 }}>
+                  <Text strong style={{ display: 'block', marginBottom: 12, fontSize: 16 }}>
+                    Provider
+                  </Text>
+                  <Select
+                    value={selectedProvider}
+                    onChange={handleProviderChange}
+                    size="large"
+                    style={{ width: '100%', maxWidth: 300 }}
+                    options={[
+                      {
+                        value: 'claude',
+                        label: (
+                          <Space>
+                            <RobotOutlined />
+                            Claude API
+                          </Space>
+                        ),
+                      },
+                      {
+                        value: 'qwen',
+                        label: (
+                          <Space>
+                            <RobotOutlined />
+                            QWEN API
+                          </Space>
+                        ),
+                      },
+                    ]}
+                  />
+                </div>
+
+                <div style={{ marginBottom: 24 }}>
+                  <Text strong style={{ display: 'block', marginBottom: 12, fontSize: 16 }}>
+                    Model ({selectedProvider.toUpperCase()})
+                  </Text>
+                  
+                  {Object.entries(models.providers[selectedProvider].models).map(([modelKey, model]) =>
+                    renderModelCard(modelKey, model, selectedModel === modelKey)
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    Click on a model card to select it, then save your selection.
+                  </Text>
+                  <Button 
+                    onClick={saveModelSettings} 
+                    type="primary" 
+                    size="large"
+                    disabled={!selectedModel}
+                  >
+                    Save Model Settings
+                  </Button>
+                </div>
+
+                <div style={{ 
+                  marginTop: 24, 
+                  padding: 16, 
+                  backgroundColor: '#1f2937', 
+                  borderRadius: 6 
+                }}>
+                  <Text strong style={{ color: '#10b981' }}>Model Information</Text>
+                  <Paragraph style={{ 
+                    margin: '8px 0 0 0', 
+                    fontSize: 13, 
+                    color: '#e5e7eb' 
+                  }}>
+                    <TrophyOutlined /> Quality: Translation accuracy and fluency<br/>
+                    <ThunderboltOutlined /> Speed: Processing time per translation<br/>
+                    <DollarOutlined /> Cost: Relative pricing (no specific amounts shown)
+                  </Paragraph>
+                </div>
+              </>
+            )}
           </div>
         </TabPane>
 
